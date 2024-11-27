@@ -18,8 +18,8 @@ class Constants {
   // API
   // static var API = "http://127.0.0.1:8000/api/v1";
   static var API = "http://127.0.0.1:8000/api/v1";
-  static var API_register = API + "/register";
-  static var API_login = API + "/login";
-  static var API_forgot_password = API + "/forgot-password";
-  static var API_reset_password = API + "/password/reset";
+  static var API_register = "$API/register";
+  static var API_login = "$API/login";
+  static var API_forgot_password = "$API/forgot-password";
+  static var API_reset_password = "$API/password/reset";
 }

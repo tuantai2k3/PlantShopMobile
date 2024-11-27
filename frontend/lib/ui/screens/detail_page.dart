@@ -15,7 +15,7 @@ import 'package:frontend/ui/screens/checkout_page.dart';
 class DetailPage extends StatefulWidget {
   final int productId;
 
-  const DetailPage({Key? key, required this.productId}) : super(key: key);
+  const DetailPage({super.key, required this.productId});
 
   @override
   _DetailPageState createState() => _DetailPageState();
@@ -26,6 +26,7 @@ class _DetailPageState extends State<DetailPage> {
   List<Product> recommendedProducts = [];
   List<Map<String, dynamic>> reviews = [];
   bool _isLoading = true;
+  bool isBuyingNow = false;
   int _currentImageIndex = 0;
   final PageController _pageController = PageController();
   int _quantity = 1;
@@ -54,12 +55,15 @@ class _DetailPageState extends State<DetailPage> {
             product = Product.fromJson(responseData['data']);
             _isLoading = false;
           });
+        } else {
+          _showSnackBar('Không thể tải thông tin sản phẩm', Colors.red);
         }
       } else {
-        throw Exception('Failed to load product details');
+        _showSnackBar('Không thể tải thông tin sản phẩm', Colors.red);
       }
     } catch (e) {
-      print("Error: $e");
+      print("Error loading product details: $e");
+      _showSnackBar('Lỗi khi tải thông tin sản phẩm', Colors.red);
       setState(() => _isLoading = false);
     }
   }
@@ -83,42 +87,97 @@ class _DetailPageState extends State<DetailPage> {
     }
   }
 
-  Future<void> _loadReviews() async {
-    try {
-      final response = await http.get(
-        Uri.parse('$baseUrl/products/${widget.productId}/reviews'),
-        headers: {"Content-Type": "application/json"},
-      );
+Future<void> _loadReviews() async {
+  try {
+    final response = await http.get(
+      Uri.parse('$baseUrl/comments?product_id=${widget.productId}'),
+      headers: {"Content-Type": "application/json"},
+    );
 
-      if (response.statusCode == 200) {
-        setState(() {
-          reviews = List<Map<String, dynamic>>.from(
-              json.decode(response.body)['data']);
-        });
-      }
-    } catch (e) {
-      print("Error loading reviews: $e");
+    if (response.statusCode == 200) {
+      final Map<String, dynamic> responseData = json.decode(response.body);
+      final List<Map<String, dynamic>> loadedReviews = List<Map<String, dynamic>>.from(responseData['data'] ?? []);
+      setState(() {
+        reviews = loadedReviews;
+      });
+    } else {
+      _showSnackBar('Không thể tải bình luận', Colors.red);
     }
+  } catch (e) {
+    print("Error loading reviews: $e");
+    _showSnackBar('Lỗi khi tải bình luận', Colors.red);
+  }
+}
+
+
+
+
+Future<void> _addReview(String content) async {
+  if (content.isEmpty) {
+    _showSnackBar('Vui lòng nhập nội dung bình luận', Colors.red);
+    return;
   }
 
-  Future<void> _addReview(String content) async {
-    try {
-      final response = await http.post(
-        Uri.parse('$baseUrl/products/${widget.productId}/reviews'),
-        headers: {"Content-Type": "application/json"},
-        body: json.encode({'content': content}),
-      );
+  try {
+    final response = await http.post(
+      Uri.parse('$baseUrl/comments'),
+      headers: {
+        "Content-Type": "application/json",
+        "Accept": "application/json"
+      },
+      body: json.encode({
+        'content': content,
+        'name': 'Anonymous', // Tên người dùng có thể lấy từ thông tin người dùng hiện tại
+        'url': 'user-comment',
+        'product_id': widget.productId.toString(),
+      }),
+    );
 
-      if (response.statusCode == 201) {
-        setState(() {
-          reviews.insert(0, json.decode(response.body)['data']);
-        });
-        _showSnackBar('Đánh giá đã được thêm!', Colors.green);
-      } else {
-        throw Exception('Failed to add review');
+    print('Response status: ${response.statusCode}');
+    print('Response body: ${response.body}');
+
+    if (response.statusCode == 201 || response.statusCode == 200) {
+      final Map<String, dynamic> newReview = {
+        'user': 'Bạn', // Hoặc tên người dùng thực tế nếu có
+        'content': content,
+        'created_at': DateTime.now().toIso8601String(),
+        'product_id': widget.productId,
+      };
+
+      // Cập nhật lại giao diện với bình luận mới
+      setState(() {
+        reviews.insert(0, newReview);  // Chèn bình luận mới vào đầu danh sách
+      });
+
+      _showSnackBar('Đã thêm bình luận thành công!', Colors.green);
+    } else {
+      final errorData = json.decode(response.body);
+      String errorMessage = 'Không thể thêm bình luận. ';
+      if (errorData['errors'] != null) {
+        errorMessage += (errorData['errors'] as Map<String, dynamic>)
+            .values
+            .expand((x) => x as List<dynamic>)
+            .join(', ');
       }
-    } catch (e) {
-      _showSnackBar('Lỗi khi thêm đánh giá.', Colors.red);
+      _showSnackBar(errorMessage, Colors.red);
+    }
+  } catch (e) {
+    print('Error adding comment: $e');
+    _showSnackBar('Đã xảy ra lỗi khi thêm bình luận', Colors.red);
+  }
+}
+
+
+  Future<void> _addToCart(CartProvider cartProvider) async {
+    if (product != null) {
+      final success = await cartProvider.addToCart(
+        product!.copyWith(quantity: _quantity),
+      );
+      if (success) {
+        _showSnackBar('Đã thêm vào giỏ hàng!', Colors.green);
+      } else {
+        _showSnackBar('Thêm vào giỏ hàng thất bại.', Colors.red);
+      }
     }
   }
 
@@ -319,8 +378,7 @@ class _DetailPageState extends State<DetailPage> {
           Row(
             children: [
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
                   color: product!.isSold == 1
                       ? Colors.green.withOpacity(0.1)
@@ -394,6 +452,10 @@ class _DetailPageState extends State<DetailPage> {
   }
 
   Widget _buildRecommendedProducts() {
+    if (recommendedProducts.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
     return Container(
       padding: const EdgeInsets.all(16),
       child: Column(
@@ -456,20 +518,22 @@ class _DetailPageState extends State<DetailPage> {
       ),
     );
   }
+Widget _buildReviews() {
+  final TextEditingController reviewController = TextEditingController();
 
-  Widget _buildReviews() {
-    final TextEditingController reviewController = TextEditingController();
-
-    return Container(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Đánh giá sản phẩm',
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 12),
+  return Container(
+    padding: const EdgeInsets.all(16),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Đánh giá sản phẩm',
+          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 12),
+        if (reviews.isEmpty)
+          const Text('Chưa có đánh giá nào')
+        else
           ListView.builder(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
@@ -482,27 +546,60 @@ class _DetailPageState extends State<DetailPage> {
                 leading: CircleAvatar(
                   child: Text(review['user'][0]),
                 ),
+                trailing: Text(
+                  DateFormat('dd/MM/yyyy').format(DateTime.parse(review['created_at'])),
+                  style: const TextStyle(fontSize: 12, color: Colors.grey),
+                ),
               );
             },
           ),
-          const Divider(),
-          TextField(
-            controller: reviewController,
-            decoration: InputDecoration(
-              labelText: 'Viết đánh giá',
-              suffixIcon: IconButton(
-                icon: const Icon(Icons.send),
-                onPressed: () {
-                  _addReview(reviewController.text);
-                  reviewController.clear();
-                },
-              ),
+        const Divider(),
+        Card(
+          elevation: 0,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8),
+            side: BorderSide(color: Colors.grey.shade300),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: reviewController,
+                    maxLines: null,
+                    decoration: const InputDecoration(
+                      hintText: 'Viết đánh giá của bạn...',
+                      border: InputBorder.none,
+                      contentPadding: EdgeInsets.symmetric(vertical: 8),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                IconButton(
+                  icon: Icon(
+                    Icons.send,
+                    color: Constants.primaryColor,
+                  ),
+                  onPressed: () {
+                    final content = reviewController.text.trim();
+                    if (content.isNotEmpty) {
+                      _addReview(content);
+                      reviewController.clear();
+                    }
+                  },
+                ),
+              ],
             ),
           ),
-        ],
-      ),
-    );
-  }
+        ),
+      ],
+    ),
+  );
+}
+
+
 
   Widget _buildBottomBar() {
     return BottomAppBar(
@@ -519,7 +616,7 @@ class _DetailPageState extends State<DetailPage> {
                 ),
                 onPressed: () {
                   Provider.of<CartProvider>(context, listen: false)
-                      .addToCart(product!);
+                      .addToCart(product!.copyWith(quantity: _quantity));
                   _showSnackBar('Đã thêm vào giỏ hàng', Colors.green);
                 },
                 icon: const Icon(Icons.shopping_cart),
@@ -535,7 +632,9 @@ class _DetailPageState extends State<DetailPage> {
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   elevation: 0,
                 ),
-                onPressed: () => _handleBuyNow(),
+                onPressed: () => _handleBuyNow(
+                  Provider.of<CartProvider>(context, listen: false),
+                ),
                 icon: const Icon(Icons.shopping_bag),
                 label: const Text('Mua ngay'),
               ),
@@ -546,19 +645,20 @@ class _DetailPageState extends State<DetailPage> {
     );
   }
 
-// Add the Buy Now functionality
-  Future<void> _handleBuyNow() async {
-    final cartProvider = Provider.of<CartProvider>(context, listen: false);
+  Future<void> _handleBuyNow(CartProvider cartProvider) async {
+    setState(() {
+      isBuyingNow = true;
+    });
 
-    // Add the product to the cart temporarily
-    cartProvider.addToCart(product!);
+    await _addToCart(cartProvider);
 
-    // Navigate to CheckoutPage
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => CheckoutPage(),
-      ),
-    );
+    if (mounted) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => CheckoutPage(),
+        ),
+      );
+    }
   }
 }

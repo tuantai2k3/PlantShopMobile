@@ -37,7 +37,7 @@ class ProductController extends Controller
         <li class="breadcrumb-item"><a href="#">/</a></li>
         <li class="breadcrumb-item active" aria-current="page">Hàng hóa </li>';
         $products = DB::table('products') ->orderBy('id','desc')
-            ->paginate($this->pagesize)->withQueryString();;
+            ->paginate($this->pagesize)->appends(request()->query());
         $cats = \App\Models\Category::where('status','active')->get();
         $cat_id = 0;
         return view('backend.products.index',compact('products','breadcrumb','active_menu','cats','cat_id'));
@@ -107,13 +107,13 @@ class ProductController extends Controller
         if($cat_id ==0)
         {
             $products = DB::table('products')->orderBy($request->field_name, $request->type_sort)
-            ->paginate($this->pagesize)->withQueryString();;
+            ->paginate($this->pagesize)->appends(request()->query());
         }
         else
         {
             $products = DB::table('products')->where('cat_id',$cat_id)
                 ->orderBy($request->field_name, $request->type_sort)
-                ->paginate($this->pagesize)->withQueryString();;
+                ->paginate($this->pagesize)->appends(request()->query());
         }
        
         $breadcrumb = '
@@ -141,7 +141,7 @@ class ProductController extends Controller
             $searchdata = implode("%", $sdatas);
 
             $products = DB::table('products')->where('title','LIKE','%'.$searchdata.'%')
-            ->paginate($this->pagesize)->withQueryString();;;
+            ->paginate($this->pagesize)->appends(request()->query());
             $active_menu="pro_list";
             $breadcrumb = '
             <li class="breadcrumb-item"><a href="#">/</a></li>
@@ -577,7 +577,7 @@ class ProductController extends Controller
         $sql1 = "select a.* , b.price from (select * from u_groups where status = 'active') as a"
         ." left join ( select * from group_prices where product_id = ".$id.") as b on a.id = b.ugroup_id";
         // dd($sql1);
-        $group_prices = \DB::select($sql1);
+        $group_prices = DB::select($sql1);
         foreach ($group_prices as $gprice)
         {
             

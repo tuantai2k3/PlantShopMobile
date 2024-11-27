@@ -5,7 +5,7 @@ import 'package:intl/intl.dart';
 import 'package:frontend/ui/screens/checkout_page.dart';
 
 class CartPage extends StatelessWidget {
-  const CartPage({Key? key}) : super(key: key);
+  const CartPage({super.key});
 
   @override
   Widget build(BuildContext context) {

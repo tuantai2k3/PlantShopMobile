@@ -1,35 +1,31 @@
 buildscript {
-    ext.kotlin_version = '1.7.10'
+      ext.kotlin_version = '1.7.10'
     repositories {
-        google()
-        mavenCentral()
+        google()        // Kho lưu trữ Google
+        mavenCentral()  // Kho lưu trữ Maven Central
     }
-
     dependencies {
+        // Đảm bảo bạn đã chỉ định các dependencies cần thiết cho việc biên dịch, chẳng hạn như Kotlin Gradle Plugin và Android Gradle Plugin
+         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+        classpath 'com.android.tools.build:gradle:8.0.0'
         
-        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
-
-        classpath 'com.android.tools.build:gradle:8.0.0' 
-        classpath 'com.google.gms:google-services:4.3.15'
-        classpath 'com.google.firebase:firebase-crashlytics-gradle:2.9.2'
     }
 }
 
 allprojects {
     repositories {
-        google()
-        mavenCentral()
+        google()        // Kho lưu trữ Google
+        mavenCentral()  // Kho lưu trữ Maven Central
     }
 }
 
-rootProject.buildDir = '../build'
+rootProject.buildDir = "../build"  // Đặt thư mục build cho toàn bộ dự án
+
 subprojects {
-    project.buildDir = "${rootProject.buildDir}/${project.name}"
-}
-subprojects {
-    project.evaluationDependsOn(':app')
+    project.buildDir = "${rootProject.buildDir}/${project.name}" // Cấu hình thư mục build riêng cho từng subproject
+    project.evaluationDependsOn(":app") // Đảm bảo phụ thuộc vào project ':app'
 }
 
 tasks.register("clean", Delete) {
-    delete rootProject.buildDir
+    delete rootProject.buildDir // Đăng ký task "clean" để xóa thư mục build khi cần dọn dẹp
 }

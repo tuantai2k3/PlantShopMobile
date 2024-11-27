@@ -18,6 +18,7 @@ class CartProvider extends ChangeNotifier {
     };
   }
 
+  // Hàm tải giỏ hàng
   Future<void> loadCart() async {
     isLoading = true;
     notifyListeners();
@@ -50,6 +51,7 @@ class CartProvider extends ChangeNotifier {
     }
   }
 
+  // Hàm thêm sản phẩm vào giỏ
   Future<bool> addToCart(Product product, {bool isBuyNow = false}) async {
     _isBuyNow = isBuyNow; // Đánh dấu nếu hành động là "Mua ngay"
     try {
@@ -93,6 +95,7 @@ class CartProvider extends ChangeNotifier {
     }
   }
 
+  // Hàm cập nhật số lượng sản phẩm trong giỏ
   Future<bool> updateQuantity(Product product, int quantity) async {
     try {
       final headers = await _getHeaders();
@@ -122,6 +125,7 @@ class CartProvider extends ChangeNotifier {
     }
   }
 
+  // Hàm xóa sản phẩm khỏi giỏ
   Future<bool> removeFromCart(Product product) async {
     try {
       final headers = await _getHeaders();
@@ -145,6 +149,7 @@ class CartProvider extends ChangeNotifier {
     }
   }
 
+  // Hàm tính tổng giá trị giỏ hàng
   double get totalAmount {
     return _items.fold(
       0,
@@ -152,15 +157,18 @@ class CartProvider extends ChangeNotifier {
     );
   }
 
+  // Kiểm tra sản phẩm có trong giỏ hay không
   bool isProductInCart(Product product) {
     return _items.any((item) => item.id == product.id);
   }
 
+  // Hàm xóa giỏ hàng
   void clearCart() {
     _items = [];
     notifyListeners();
   }
 
+  // Hàm thanh toán giỏ hàng
   Future<bool> checkout(BuildContext context) async {
     if (_items.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(

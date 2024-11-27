@@ -7,13 +7,13 @@ class CustomTextfield extends StatelessWidget {
   final IconData icon;
 
   const CustomTextfield({
-    Key? key,
+    super.key,
     this.controller,
     required this.obscureText,
     required this.hintText,
     required this.icon,
     required String? Function(dynamic value) validator,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

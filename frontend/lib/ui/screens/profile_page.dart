@@ -4,9 +4,11 @@ import 'package:frontend/constants.dart';
 import 'package:frontend/providers/loginProvider.dart';
 import 'package:frontend/ui/screens/widgets/profile_widget.dart';
 import 'package:frontend/ui/screens/myProfile_page.dart'; // Import trang MyProfile
+import 'package:frontend/providers/auth_provider.dart'; // Import AuthService
+import 'package:frontend/ui/screens/signin_page.dart'; // Import màn hình đăng nhập
 
 class ProfilePage extends ConsumerWidget {
-  const ProfilePage({Key? key}) : super(key: key);
+  const ProfilePage({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -32,18 +34,18 @@ class ProfilePage extends ConsumerWidget {
             children: [
               Container(
                 width: 150,
-                child: CircleAvatar(
-                  radius: 60,
-                  backgroundImage:
-                      user.photo != null ? NetworkImage(user.photo!) : null,
-                  child: user.photo == null ? const Icon(Icons.person) : null,
-                ),
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   border: Border.all(
                     color: Constants.primaryColor.withOpacity(.5),
                     width: 5.0,
                   ),
+                ),
+                child: CircleAvatar(
+                  radius: 60,
+                  backgroundImage:
+                      user.photo != null ? NetworkImage(user.photo!) : null,
+                  child: user.photo == null ? const Icon(Icons.person) : null,
                 ),
               ),
               const SizedBox(height: 10),
@@ -56,7 +58,6 @@ class ProfilePage extends ConsumerWidget {
                       style: TextStyle(
                         color: Constants.blackColor,
                         fontSize: 20,
-                    
                       ),
                     ),
                     // Nếu đã đăng nhập, hiển thị icon verified
@@ -87,31 +88,38 @@ class ProfilePage extends ConsumerWidget {
                         // Điều hướng đến trang MyProfile
                         Navigator.push(
                           context,
-                          MaterialPageRoute(builder: (_) =>  MyProfile()),
+                          MaterialPageRoute(builder: (_) => MyProfile()),
                         );
                       },
                     ),
-                    ProfileWidget(
+                    const ProfileWidget(
                       icon: Icons.settings,
                       title: 'Cài đặt',
                     ),
-                    ProfileWidget(
+                    const ProfileWidget(
                       icon: Icons.notifications,
                       title: 'Thông báo',
                     ),
-                    ProfileWidget(
+                    const ProfileWidget(
                       icon: Icons.chat,
                       title: 'FAQs',
                     ),
-                    ProfileWidget(
+                    const ProfileWidget(
                       icon: Icons.share,
                       title: 'Chia sẻ',
                     ),
                     ProfileWidget(
-                      icon: Icons.logout,
-                      title: 'Đăng xuất',
-                      onTap: () {
-                        // Thêm logic đăng xuất nếu cần
+  icon: Icons.logout,
+  title: 'Đăng xuất',
+  onTap: () async {
+    // Gọi phương thức logout từ AuthProvider
+    await ref.read(authProvider.notifier).logout();
+       // Thực hiện điều hướng về màn hình đăng nhập và reload lại trang ProfilePage
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(builder: (_) => const SignIn()), // Điều hướng đến màn hình đăng nhập
+      (route) => false, 
+                        );
                       },
                     ),
                   ],

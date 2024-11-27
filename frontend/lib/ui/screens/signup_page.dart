@@ -5,9 +5,10 @@ import 'package:frontend/ui/root_page.dart';
 import 'package:frontend/ui/screens/signin_page.dart';
 import 'package:frontend/ui/screens/widgets/custom_textfield.dart';
 import 'package:page_transition/page_transition.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class SignUp extends StatefulWidget {
-  const SignUp({Key? key}) : super(key: key);
+  const SignUp({super.key});
 
   @override
   State<SignUp> createState() => _SignUpState();
@@ -19,6 +20,7 @@ class _SignUpState extends State<SignUp> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _isLoading = false;
+  final FlutterSecureStorage _secureStorage = const FlutterSecureStorage(); // Khởi tạo FlutterSecureStorage
 
   @override
   void dispose() {
@@ -44,9 +46,14 @@ class _SignUpState extends State<SignUp> {
       );
 
       if (response['success']) {
+        // Sau khi đăng ký thành công, lưu thông tin người dùng vào secure storage
+        await _secureStorage.write(key: 'username', value: _usernameController.text);
+        await _secureStorage.write(key: 'email', value: _emailController.text);
+        await _secureStorage.write(key: 'phone', value: _phoneController.text);
+
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Registration successful!'),
+            content: Text('Đăng ký thành công!'),
             backgroundColor: Colors.green,
           ),
         );
@@ -62,7 +69,7 @@ class _SignUpState extends State<SignUp> {
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(response['message'] ?? 'Registration failed'),
+            content: Text(response['message'] ?? 'Đăng ký thất bại'),
             backgroundColor: Colors.red,
           ),
         );
@@ -70,7 +77,7 @@ class _SignUpState extends State<SignUp> {
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Error: $e'),
+          content: Text('Lỗi: $e'),
           backgroundColor: Colors.red,
         ),
       );
@@ -230,8 +237,7 @@ class _SignUpState extends State<SignUp> {
                           color: Constants.primaryColor,
                         ),
                       ),
-                    ]),
-                  ),
+                    ])),
                 ),
               ),
             ],

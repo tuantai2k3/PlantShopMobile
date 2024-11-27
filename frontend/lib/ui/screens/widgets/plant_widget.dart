@@ -7,10 +7,10 @@ import 'package:intl/intl.dart';
 
 class PlantWidget extends StatelessWidget {
   const PlantWidget({
-    Key? key,
+    super.key,
     required this.index,
     required this.plantList,
-  }) : super(key: key);
+  });
 
   final int index;
   final List<Product> plantList;

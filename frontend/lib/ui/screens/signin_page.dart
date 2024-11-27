@@ -7,9 +7,10 @@ import 'package:frontend/ui/screens/forgot_password.dart';
 import 'package:frontend/ui/screens/signup_page.dart';
 import 'package:frontend/ui/screens/widgets/custom_textfield.dart';
 import 'package:page_transition/page_transition.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class SignIn extends ConsumerStatefulWidget {
-  const SignIn({Key? key}) : super(key: key);
+  const SignIn({super.key});
 
   @override
   ConsumerState<SignIn> createState() => _SignInState();
@@ -20,11 +21,18 @@ class _SignInState extends ConsumerState<SignIn> {
   final _passwordController = TextEditingController();
   bool _isLoading = false;
 
+  final FlutterSecureStorage _secureStorage = const FlutterSecureStorage(); // Khởi tạo flutter_secure_storage
+
   @override
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
+  }
+
+  // Hàm lưu token vào secure storage
+  Future<void> _saveToken(String token) async {
+    await _secureStorage.write(key: 'user_token', value: token); // Lưu token vào Secure Storage
   }
 
   Future<void> _signIn() async {
@@ -40,6 +48,12 @@ class _SignInState extends ConsumerState<SignIn> {
       if (success) {
         // Lấy thông tin người dùng từ provider
         final user = ref.read(userProvider);
+
+        // Lấy token từ provider sau khi đăng nhập thành công
+        const token = 'example_token'; // Bạn cần thay thế bằng token thực tế nhận được từ API
+
+        // Lưu token vào secure storage
+        await _saveToken(token);
 
         // Hiển thị thông báo đăng nhập thành công
         ScaffoldMessenger.of(context).showSnackBar(

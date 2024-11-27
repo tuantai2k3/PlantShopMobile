@@ -1,0 +1,39 @@
+buildscript {
+    ext.kotlin_version = '1.7.10'  // Bạn có thể thử với các phiên bản khác của Kotlin nếu gặp sự cố
+    repositories {
+        google()
+        mavenCentral()
+    }
+
+    dependencies {
+        // Kotlin Gradle plugin
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+        
+        // Android Gradle plugin
+        classpath 'com.android.tools.build:gradle:8.0.0'
+
+        // Firebase (nếu bạn sử dụng)
+        classpath 'com.google.gms:google-services:4.3.15'
+        classpath 'com.google.firebase:firebase-crashlytics-gradle:2.9.2'
+    }
+}
+
+allprojects {
+    repositories {
+        google()
+        mavenCentral()
+    }
+}
+
+rootProject.buildDir = '../build'
+
+subprojects {
+    project.buildDir = "${rootProject.buildDir}/${project.name}"
+}
+subprojects {
+    project.evaluationDependsOn(':app')
+}
+
+tasks.register("clean", Delete) {
+    delete rootProject.buildDir
+}

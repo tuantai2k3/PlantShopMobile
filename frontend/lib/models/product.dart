@@ -1,4 +1,9 @@
+import 'dart:convert'; // Để sử dụng jsonDecode
+import 'package:http/http.dart' as http; // Để sử dụng http
+import 'comment.dart'; // Để import class Comment nếu bạn đã tạo file comment.dart
+
 class Product {
+  final String name;
   final int id;
   final String code;
   final String? barcode;
@@ -27,7 +32,7 @@ class Product {
   final int feature;
   final DateTime createdAt;
   final DateTime updatedAt;
-
+  List<Comment> comments = [];
   // `isFavorite` field with getter and setter
   bool _isFavorite;
 
@@ -35,6 +40,7 @@ class Product {
   final int quantity;
 
   Product({
+    required this.name,
     required this.id,
     required this.code,
     this.barcode,
@@ -72,10 +78,39 @@ class Product {
   set isFavorite(bool value) {
     _isFavorite = value;
   }
+// Hàm lấy danh sách bình luận của sản phẩm từ API
+ // Hàm lấy danh sách bình luận từ API
+  Future<void> fetchComments() async {
+    try {
+      final response = await http.get(Uri.parse('http://127.0.0.1:8000/api/comments?product_id=$id'));
+
+      if (response.statusCode == 200) {
+        final List<dynamic> commentData = jsonDecode(response.body)['data'];
+
+        // Chuyển dữ liệu thành danh sách các đối tượng Comment
+        comments = commentData.map((commentJson) => Comment.fromJson(commentJson)).toList();
+      } else {
+        throw Exception('Không thể tải bình luận');
+      }
+    } catch (e) {
+      print('Lỗi khi lấy bình luận: $e');
+    }
+  }
+
+  // Toggle method for `isFavorite`
+  void toggleFavorite() {
+    _isFavorite = !_isFavorite;
+  }
+
+  // Method to update the `quantity` for cart management
+  Product updateQuantity(int newQuantity) {
+    return copyWith(quantity: newQuantity);
+  }
 
   // Factory method to create a `Product` from JSON
   factory Product.fromJson(Map<String, dynamic> json) {
     return Product(
+      name: json['name'] ?? '',
       id: json['id'] ?? 0,
       code: json['code'] ?? '',
       barcode: json['barcode'],
@@ -95,7 +130,7 @@ class Product {
       catId: json['cat_id'],
       parentCatId: json['parent_cat_id'],
       photos: json['photo'] != null && json['photo'] is List
-          ? (json['photo'] as List).map((e) => e.toString()).toList()
+          ? List<String>.from(json['photo'])
           : [],
       size: json['size'],
       weight: json['weight'],
@@ -183,8 +218,10 @@ class Product {
     DateTime? updatedAt,
     bool? isFavorite,
     int? quantity,
+    
   }) {
     return Product(
+      name: name,
       id: id ?? this.id,
       code: code ?? this.code,
       barcode: barcode ?? this.barcode,
@@ -213,7 +250,7 @@ class Product {
       feature: feature ?? this.feature,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
-      isFavorite: isFavorite ?? _isFavorite,
+      isFavorite: isFavorite ?? this.isFavorite,
       quantity: quantity ?? this.quantity,
     );
   }

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 class CheckoutSuccessPage extends StatelessWidget {
-  const CheckoutSuccessPage({Key? key}) : super(key: key);
+  const CheckoutSuccessPage({super.key});
 
   @override
   Widget build(BuildContext context) {

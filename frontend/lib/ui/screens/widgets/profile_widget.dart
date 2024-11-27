@@ -7,11 +7,11 @@ class ProfileWidget extends StatelessWidget {
   final VoidCallback? onTap; // Callback khi nhấn
 
   const ProfileWidget({
-    Key? key,
+    super.key,
     required this.icon,
     required this.title,
     this.onTap,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

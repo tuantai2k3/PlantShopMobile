@@ -21,18 +21,24 @@
                             <i data-lucide="x" class="w-4 h-4"></i> 
                         </button> 
                     </div>
-                    
-                    <?php endif; ?>
+                <?php endif; ?>
                 
                 <div class="hidden xl:flex flex-col min-h-screen">
                     <a href="" class="-intro-x flex items-center pt-5">
-                        <span class="text-white text-lg ml-3"><?php echo e($detail->company_name); ?> </span> 
+                        <?php if($detail): ?>
+                            <span class="text-white text-lg ml-3"><?php echo e($detail->company_name); ?></span>
+                        <?php else: ?>
+                            <span class="text-white text-lg ml-3">Default Company Name</span>
+                        <?php endif; ?>
                     </a>
                     <div class="my-auto">
-                        <img alt="Midone - HTML Admin Template" class="-intro-x w-1/2 -mt-16" src="<?php echo e($detail->logo); ?>">
+                        <?php if($detail && $detail->logo): ?>
+                            <img alt="Logo" class="-intro-x w-1/2 -mt-16" src="<?php echo e($detail->logo); ?>">
+                        <?php else: ?>
+                            <img alt="Logo" class="-intro-x w-1/2 -mt-16" src="default-logo.png"> <!-- Replace with a default logo -->
+                        <?php endif; ?>
                         <div class="-intro-x text-white font-medium text-4xl leading-tight mt-10">
                             Quản lý bán hàng <br/>
-                            
                         </div>
                         <div class="-intro-x mt-5 text-lg text-white text-opacity-70 dark:text-slate-400"> </div>
                     </div>
@@ -132,4 +138,5 @@ unset($__errorArgs, $__bag); ?>
         </div>
         <?php echo $__env->make('backend.layouts.footer', \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?>
     </body>
-</html><?php /**PATH C:\Users\BOOTWINDOW10\Desktop\Laptrinhdidong\Plant-shop\backend\resources\views/auth/login.blade.php ENDPATH**/ ?>
+</html>
+c<?php /**PATH C:\Users\BOOTWINDOW10\Desktop\Laptrinhdidong\Plant-shop\backend\resources\views/auth/login.blade.php ENDPATH**/ ?>

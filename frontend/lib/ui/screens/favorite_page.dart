@@ -7,7 +7,7 @@ import 'package:intl/intl.dart';
 import 'package:page_transition/page_transition.dart';
 
 class FavoritePage extends StatelessWidget {
-  FavoritePage({Key? key}) : super(key: key);
+  FavoritePage({super.key});
 
   final formatCurrency = NumberFormat.currency(locale: 'vi_VN', symbol: 'đ');
 

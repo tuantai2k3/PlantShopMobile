@@ -10,7 +10,7 @@ import 'package:frontend/services/api_service.dart';
 import 'package:page_transition/page_transition.dart';
 
 class HomePage extends StatefulWidget {
-  const HomePage({Key? key}) : super(key: key);
+  const HomePage({super.key});
 
   @override
   State<HomePage> createState() => _HomePageState();
@@ -128,6 +128,7 @@ class _HomePageState extends State<HomePage> {
 
   Widget _buildAppBar() {
     return SliverAppBar(
+       automaticallyImplyLeading: false,
       floating: true,
       backgroundColor: Colors.transparent,
       title: Padding(
@@ -136,8 +137,10 @@ class _HomePageState extends State<HomePage> {
           children: [
             Text(
               'SHOP BÁN CÂY ',
+              
               style: TextStyle(
                 color: Constants.primaryColor,
+              
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
               ),

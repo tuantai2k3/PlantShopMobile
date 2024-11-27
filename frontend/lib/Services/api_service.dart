@@ -23,6 +23,7 @@ class ApiService {
   }
 
   // Authentication Methods
+  // Đăng nhập
   static Future<Map<String, dynamic>> login(String email, String password) async {
     try {
       final response = await http.post(
@@ -33,29 +34,24 @@ class ApiService {
         },
         body: jsonEncode({
           "email": email,
-          "password": password
+          "password": password,
         }),
       );
-
-      print('Login Response Status Code: ${response.statusCode}');
-      print('Login Response Body: ${response.body}');
 
       if (response.statusCode == 200) {
         final Map<String, dynamic> data = jsonDecode(response.body);
         if (data['success'] == true && data['token'] != null) {
           final String token = data['token']['token'];
-          setToken(token);
+          // Lưu token vào secure storage hoặc SharedPreferences
         }
         return data;
       } else {
-        print('Login Failed: ${response.body}');
         return {
           'success': false,
           'message': 'Đăng nhập thất bại: ${response.statusCode}',
         };
       }
     } catch (e) {
-      print('Login Error: $e');
       return {
         'success': false,
         'message': 'Lỗi kết nối: $e',
@@ -63,6 +59,7 @@ class ApiService {
     }
   }
 
+  // Đăng ký
   static Future<Map<String, dynamic>> register(
     String username,
     String phone,
@@ -85,9 +82,6 @@ class ApiService {
           "password_confirmation": confirmPassword,
         }),
       );
-
-      print('Register Status Code: ${response.statusCode}');
-      print('Register Response Body: ${response.body}');
 
       final Map<String, dynamic> responseData = jsonDecode(response.body);
 
@@ -126,12 +120,16 @@ class ApiService {
           };
       }
     } catch (e) {
-      print('Register Error: $e');
       return {
         'success': false,
         'message': 'Lỗi kết nối: $e',
       };
     }
+  }
+
+  // Đăng xuất
+  static Future<void> logout() async {
+    // Xóa token hoặc làm gì đó khi người dùng đăng xuất
   }
   //-Checkout-//
 Future<Map<String, dynamic>> checkout(List<Map<String, dynamic>> items) async {
@@ -806,34 +804,67 @@ Future<bool> addToCart(int productId, {int quantity = 1}) async {
       };
     }
   }
+Future<void> addComment(int productId, String content, String name, Uri url) async {
+  final apiUrl = Uri.parse('http://127.0.0.1:8000/api/v1/comments/');
+  
+  final urlString = url.toString();
+  
+  final data = {
+    'name': name,
+    'content': content,
+    'url': urlString.isNotEmpty ? urlString : null,
+    'product_id': productId.toString(),
+  };
 
-  // Logout Method
-  static Future<bool> logout() async {
-    try {
-      if (_token == null) {
-        return true; // Already logged out
-      }
+  try {
+    final response = await http.post(
+      apiUrl,
+      headers: {
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+      },
+      body: json.encode(data),
+    );
 
-      final response = await http.post(
-        Uri.parse('$baseUrl/logout'),
-        headers: {
-          "Content-Type": "application/json",
-          "Accept": "application/json",
-          "Authorization": "Bearer $_token",
-        },
-      );
-
-      print('Logout Response Status: ${response.statusCode}');
-      print('Logout Response Body: ${response.body}');
-
-      if (response.statusCode == 200) {
-        _token = null; // Clear token
-        return true;
-      }
-      return false;
-    } catch (e) {
-      print('Logout Error: $e');
-      return false;
+    if (response.statusCode == 201 || response.statusCode == 200) {
+      print('Bình luận đã được thêm thành công');
+      
+      // Sau khi bình luận thành công, gọi lại API để lấy lại danh sách bình luận
+      await getCommentsForProduct(productId);
+    } else {
+      final errorData = json.decode(response.body);
+      print('Lỗi: ${errorData['message']}');
+      print('Chi tiết lỗi: ${errorData['errors']}');
     }
+  } catch (e) {
+    print('Lỗi khi gửi yêu cầu: $e');
   }
+}
+
+// Phương thức lấy danh sách bình luận
+Future<void> getCommentsForProduct(int productId) async {
+  final apiUrl = Uri.parse('http://127.0.0.1:8000/api/v1/comments/$productId');
+  
+  try {
+    final response = await http.get(
+      apiUrl,
+      headers: {
+        "Accept": "application/json",
+      },
+    );
+
+    if (response.statusCode == 200) {
+      final List<dynamic> comments = json.decode(response.body);
+      print('Danh sách bình luận: $comments');
+      
+      // Cập nhật lại UI bằng state management hoặc setState nếu cần
+      // updateComments(comments);
+    } else {
+      print('Lỗi khi lấy bình luận');
+    }
+  } catch (e) {
+    print('Lỗi khi lấy bình luận: $e');
+  }
+}
+
 }

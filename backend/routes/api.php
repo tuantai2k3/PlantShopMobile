@@ -3,7 +3,7 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\CartController;
-use App\Http\Controllers\Api\RatingController; // Thêm dòng này
+use App\Http\Controllers\Api\CommentController;
 
 Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
@@ -30,13 +30,14 @@ Route::group(['namespace' => 'Api', 'prefix' => 'v1'], function () {
     Route::delete('cart/clear', [\App\Http\Controllers\Api\CartController::class, 'clear']);
     Route::post('cart/checkout', [\App\Http\Controllers\Api\CartController::class, 'checkout']);
 
-    // Rating routes - Thêm những routes này
-    Route::group(['prefix' => 'ratings'], function () {
-        Route::get('/', [\App\Http\Controllers\Api\RatingController::class, 'index']); // Lấy tất cả đánh giá
-        Route::post('/', [\App\Http\Controllers\Api\RatingController::class, 'store'])->middleware('auth:api'); // Tạo đánh giá mới
-        Route::get('product/{product_id}', [\App\Http\Controllers\Api\RatingController::class, 'getProductRatings']); // Lấy đánh giá theo sản phẩm
-        Route::get('user/{user_id}', [\App\Http\Controllers\Api\RatingController::class, 'getUserRatings'])->middleware('auth:api'); // Lấy đánh giá của user
-        Route::put('/{id}', [\App\Http\Controllers\Api\RatingController::class, 'update'])->middleware('auth:api'); // Cập nhật đánh giá
-        Route::delete('/{id}', [\App\Http\Controllers\Api\RatingController::class, 'destroy'])->middleware('auth:api'); // Xóa đánh giá
-    });
+    // Comment routes
+    Route::get('comments', [\App\Http\Controllers\Api\CommentController::class, 'index']);
+    Route::post('comments', [\App\Http\Controllers\Api\CommentController::class, 'store']);
+    Route::put('comments/{id}', [\App\Http\Controllers\Api\CommentController::class, 'update']);
+    Route::delete('comments/{id}', [\App\Http\Controllers\Api\CommentController::class, 'destroy']);
+    Route::get('comments/product/{productId}', [\App\Http\Controllers\Api\CommentController::class, 'getByProduct']);
+
+    // Hoặc sử dụng Resource Route (ngắn gọn hơn)
+    // Route::apiResource('comments', \App\Http\Controllers\Api\CommentController::class);
+    // Route::get('comments/product/{productId}', [\App\Http\Controllers\Api\CommentController::class, 'getByProduct']);
 });

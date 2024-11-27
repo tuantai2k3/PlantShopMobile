@@ -7,11 +7,11 @@ class BaseScaffold extends StatelessWidget {
   final ValueChanged<int> onTabChanged;
 
   const BaseScaffold({
-    Key? key,
+    super.key,
     required this.body,
     required this.currentIndex,
     required this.onTabChanged,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -49,8 +49,8 @@ class BaseScaffold extends StatelessWidget {
         onPressed: () {
           Navigator.pushNamed(context, '/scan');
         },
-        child: const Icon(Icons.qr_code_scanner),
         backgroundColor: Colors.green,
+        child: const Icon(Icons.qr_code_scanner),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       bottomNavigationBar: AnimatedBottomNavigationBar(

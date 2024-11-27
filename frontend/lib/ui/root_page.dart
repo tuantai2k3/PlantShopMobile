@@ -11,7 +11,7 @@ import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
 
 class RootPage extends StatefulWidget {
-  const RootPage({Key? key}) : super(key: key);
+  const RootPage({super.key});
 
   @override
   State<RootPage> createState() => _RootPageState();
@@ -24,7 +24,7 @@ class _RootPageState extends State<RootPage> {
   bool _isLoading = false;
 
   final String _baseUrl = "http://127.0.0.1:8000/api/v1";
-
+  
   final List<Widget> _pages = [
     const HomePage(),
     FavoritePage(),
@@ -36,19 +36,23 @@ class _RootPageState extends State<RootPage> {
   void initState() {
     super.initState();
     _loadInitialData();
-    // Chỉ cần load cart data vì HomePage sẽ tự load products
+    // Load cart data
     Provider.of<CartProvider>(context, listen: false).loadCart();
   }
 
   Future<void> _loadInitialData() async {
-    await Future.wait([
-      _loadProducts(),
-      _loadFavoriteProducts(),
-    ]);
+    setState(() => _isLoading = true);
+    
+    try {
+      await Future.wait([_loadProducts(), _loadFavoriteProducts()]);
+    } catch (e) {
+      print('Error loading initial data: $e');
+    } finally {
+      setState(() => _isLoading = false);
+    }
   }
 
   Future<void> _loadProducts() async {
-    setState(() => _isLoading = true);
     try {
       final response = await http.get(Uri.parse('$_baseUrl/products'));
 
@@ -56,19 +60,19 @@ class _RootPageState extends State<RootPage> {
         final data = json.decode(response.body);
         if (data['success'] == true && data['products'] != null) {
           setState(() {
-            _products = data['products']
-                .map<Product>((json) => Product.fromJson(json))
-                .toList();
+            _products = List<Product>.from(
+              data['products'].map((json) => Product.fromJson(json))
+            );
           });
         } else {
           setState(() => _products = []);
         }
+      } else {
+        throw Exception('Failed to load products');
       }
     } catch (e) {
       print('Error loading products: $e');
       setState(() => _products = []);
-    } finally {
-      setState(() => _isLoading = false);
     }
   }
 
@@ -80,13 +84,15 @@ class _RootPageState extends State<RootPage> {
         final data = json.decode(response.body);
         if (data['success'] == true && data['products'] != null) {
           setState(() {
-            _favorites = data['products']
-                .map<Product>((json) => Product.fromJson(json))
-                .toList();
+            _favorites = List<Product>.from(
+              data['products'].map((json) => Product.fromJson(json))
+            );
           });
         } else {
           setState(() => _favorites = []);
         }
+      } else {
+        throw Exception('Failed to load favorites');
       }
     } catch (e) {
       print('Error loading favorites: $e');
