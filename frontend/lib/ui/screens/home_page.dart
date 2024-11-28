@@ -136,7 +136,7 @@ class _HomePageState extends State<HomePage> {
         child: Row(
           children: [
             Text(
-              'SHOP BÁN CÂY ',
+              'PLANT SHOP ',
               
               style: TextStyle(
                 color: Constants.primaryColor,
@@ -287,7 +287,7 @@ class _HomePageState extends State<HomePage> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               const Text(
-                'Exclusive',
+                'Sản Phẩm Nổi Bật',
                 style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
@@ -296,7 +296,7 @@ class _HomePageState extends State<HomePage> {
               TextButton(
                 onPressed: () {},
                 child: Text(
-                  'See all',
+                  'Tất cả',
                   style: TextStyle(color: Colors.grey[600]),
                 ),
               ),

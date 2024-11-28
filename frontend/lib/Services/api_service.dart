@@ -24,7 +24,8 @@ class ApiService {
 
   // Authentication Methods
   // Đăng nhập
-  static Future<Map<String, dynamic>> login(String email, String password) async {
+  static Future<Map<String, dynamic>> login(
+      String email, String password) async {
     try {
       final response = await http.post(
         Uri.parse('$baseUrl/login'),
@@ -110,13 +111,15 @@ class ApiService {
         case 409:
           return {
             'success': false,
-            'message': responseData['message'] ?? 'Email hoặc số điện thoại đã tồn tại',
+            'message': responseData['message'] ??
+                'Email hoặc số điện thoại đã tồn tại',
           };
 
         default:
           return {
             'success': false,
-            'message': responseData['message'] ?? 'Đăng ký thất bại (${response.statusCode})',
+            'message': responseData['message'] ??
+                'Đăng ký thất bại (${response.statusCode})',
           };
       }
     } catch (e) {
@@ -131,56 +134,55 @@ class ApiService {
   static Future<void> logout() async {
     // Xóa token hoặc làm gì đó khi người dùng đăng xuất
   }
- Future<Map<String, dynamic>> checkout(
-  List<Map<String, dynamic>> items, String paymentMethod) async {
-  try {
-    if (_token == null) {
-      return {
-        'success': false,
-        'message': 'Token is not set',
-      };
-    }
-
-    final response = await http.post(
-      Uri.parse('$baseUrl/cart/checkout'),
-      headers: _headers,
-      body: jsonEncode({
-        'items': items,
-        'payment_method': paymentMethod,  // Add the payment method here
-      }),
-    );
-
-    print('Checkout Response Status: ${response.statusCode}');
-    print('Checkout Response Body: ${response.body}');
-
-    if (response.statusCode == 200) {
-      final Map<String, dynamic> data = json.decode(response.body);
-      if (data['success'] == true) {
+  Future<Map<String, dynamic>> checkout(
+      List<Map<String, dynamic>> items, String paymentMethod) async {
+    try {
+      if (_token == null) {
         return {
-          'success': true,
-          'message': data['message'] ?? 'Thanh toán thành công',
+          'success': false,
+          'message': 'Token is not set',
         };
+      }
+
+      final response = await http.post(
+        Uri.parse('$baseUrl/cart/checkout'),
+        headers: _headers,
+        body: jsonEncode({
+          'items': items,
+          'payment_method': paymentMethod, // Add the payment method here
+        }),
+      );
+
+      print('Checkout Response Status: ${response.statusCode}');
+      print('Checkout Response Body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> data = json.decode(response.body);
+        if (data['success'] == true) {
+          return {
+            'success': true,
+            'message': data['message'] ?? 'Thanh toán thành công',
+          };
+        } else {
+          return {
+            'success': false,
+            'message': data['message'] ?? 'Thanh toán thất bại',
+          };
+        }
       } else {
         return {
           'success': false,
-          'message': data['message'] ?? 'Thanh toán thất bại',
+          'message': 'Thanh toán thất bại (${response.statusCode})',
         };
       }
-    } else {
+    } catch (e) {
+      print('Checkout Error: $e');
       return {
         'success': false,
-        'message': 'Thanh toán thất bại (${response.statusCode})',
+        'message': 'Lỗi kết nối: $e',
       };
     }
-  } catch (e) {
-    print('Checkout Error: $e');
-    return {
-      'success': false,
-      'message': 'Lỗi kết nối: $e',
-    };
   }
-}
-
 
   // Password Reset Methods
   static Future<Map<String, dynamic>> forgotPassword(String email) async {
@@ -203,7 +205,8 @@ class ApiService {
         case 200:
           return {
             'success': true,
-            'message': responseData['message'] ?? 'Email khôi phục mật khẩu đã được gửi',
+            'message': responseData['message'] ??
+                'Email khôi phục mật khẩu đã được gửi',
           };
         case 404:
           return {
@@ -213,7 +216,8 @@ class ApiService {
         default:
           return {
             'success': false,
-            'message': responseData['message'] ?? 'Không thể gửi email khôi phục',
+            'message':
+                responseData['message'] ?? 'Không thể gửi email khôi phục',
           };
       }
     } catch (e) {
@@ -454,41 +458,41 @@ class ApiService {
     }
   }
 
- Future<bool> toggleFavorite(int productId) async {
-  try {
-    if (_token == null) {
-      print('Token is not set');
-      return false;
-    }
-
-    final response = await http.post(
-      Uri.parse('$baseUrl/products/$productId/favorite'),
-      headers: _headers,
-    );
-
-    print('Toggle Favorite Response Status: ${response.statusCode}');
-    print('Toggle Favorite Response Body: ${response.body}');
-
-    if (response.statusCode == 200) {
-      final Map<String, dynamic> data = json.decode(response.body);
-      if (data['success'] == true) {
-        // Check if the API returns the new favorite status
-        if (data['is_favorited'] != null) {
-          return data['is_favorited'];
-        }
-        return true;
+  Future<bool> toggleFavorite(int productId) async {
+    try {
+      if (_token == null) {
+        print('Token is not set');
+        return false;
       }
-    } else if (response.statusCode == 401) {
-      print('Unauthorized - Please log in');
+
+      final response = await http.post(
+        Uri.parse('$baseUrl/products/$productId/favorite'),
+        headers: _headers,
+      );
+
+      print('Toggle Favorite Response Status: ${response.statusCode}');
+      print('Toggle Favorite Response Body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> data = json.decode(response.body);
+        if (data['success'] == true) {
+          // Check if the API returns the new favorite status
+          if (data['is_favorited'] != null) {
+            return data['is_favorited'];
+          }
+          return true;
+        }
+      } else if (response.statusCode == 401) {
+        print('Unauthorized - Please log in');
+        return false;
+      }
+
+      return false;
+    } catch (e) {
+      print('Error toggling favorite: $e');
       return false;
     }
-    
-    return false;
-  } catch (e) {
-    print('Error toggling favorite: $e');
-    return false;
   }
-}
 
   Future<bool> isProductFavorited(int productId) async {
     try {
@@ -535,7 +539,7 @@ class ApiService {
     }
   }
 
-Future<bool> addToCart(int productId, {int quantity = 1}) async {
+  Future<bool> addToCart(int productId, {int quantity = 1}) async {
     try {
       if (_token == null) {
         print('Token is not set');
@@ -650,10 +654,7 @@ Future<bool> addToCart(int productId, {int quantity = 1}) async {
   Future<Map<String, dynamic>> getUserProfile() async {
     try {
       if (_token == null) {
-        return {
-          'success': false,
-          'message': 'Token is not set'
-        };
+        return {'success': false, 'message': 'Token is not set'};
       }
 
       final response = await http.get(
@@ -666,21 +667,12 @@ Future<bool> addToCart(int productId, {int quantity = 1}) async {
 
       if (response.statusCode == 200) {
         final Map<String, dynamic> data = json.decode(response.body);
-        return {
-          'success': true,
-          'profile': data['user']
-        };
+        return {'success': true, 'profile': data['user']};
       }
-      return {
-        'success': false,
-        'message': 'Failed to get profile'
-      };
+      return {'success': false, 'message': 'Failed to get profile'};
     } catch (e) {
       print('Error getting profile: $e');
-      return {
-        'success': false,
-        'message': 'Error: $e'
-      };
+      return {'success': false, 'message': 'Error: $e'};
     }
   }
 
@@ -692,10 +684,7 @@ Future<bool> addToCart(int productId, {int quantity = 1}) async {
   }) async {
     try {
       if (_token == null) {
-        return {
-          'success': false,
-          'message': 'Token is not set'
-        };
+        return {'success': false, 'message': 'Token is not set'};
       }
 
       final Map<String, dynamic> updateData = {
@@ -730,10 +719,7 @@ Future<bool> addToCart(int productId, {int quantity = 1}) async {
       };
     } catch (e) {
       print('Error updating profile: $e');
-      return {
-        'success': false,
-        'message': 'Error: $e'
-      };
+      return {'success': false, 'message': 'Error: $e'};
     }
   }
 
@@ -795,7 +781,7 @@ Future<bool> addToCart(int productId, {int quantity = 1}) async {
           'message': responseData['message'] ?? 'Email đã được gửi lại',
         };
       }
-      
+
       return {
         'success': false,
         'message': responseData['message'] ?? 'Không thể gửi lại email',
@@ -808,15 +794,17 @@ Future<bool> addToCart(int productId, {int quantity = 1}) async {
       };
     }
   }
-Future<void> addComment(int productId, String content, String name, Uri url) async {
+
+  // Phương thức thêm bình luận
+Future<void> addComment(int productId, String content, String name, Uri? url) async {
   final apiUrl = Uri.parse('http://127.0.0.1:8000/api/v1/comments/');
   
-  final urlString = url.toString();
-  
+  final urlString = url?.toString();
+
   final data = {
     'name': name,
     'content': content,
-    'url': urlString.isNotEmpty ? urlString : null,
+    'url': urlString?.isNotEmpty ?? false ? urlString : null,
     'product_id': productId.toString(),
   };
 
@@ -832,9 +820,7 @@ Future<void> addComment(int productId, String content, String name, Uri url) asy
 
     if (response.statusCode == 201 || response.statusCode == 200) {
       print('Bình luận đã được thêm thành công');
-      
-      // Sau khi bình luận thành công, gọi lại API để lấy lại danh sách bình luận
-      await getCommentsForProduct(productId);
+      // Sau khi thêm bình luận, không trả về gì
     } else {
       final errorData = json.decode(response.body);
       print('Lỗi: ${errorData['message']}');
@@ -844,9 +830,8 @@ Future<void> addComment(int productId, String content, String name, Uri url) asy
     print('Lỗi khi gửi yêu cầu: $e');
   }
 }
-
 // Phương thức lấy danh sách bình luận
-Future<void> getCommentsForProduct(int productId) async {
+Future<List<dynamic>> getCommentsForProduct(int productId) async {
   final apiUrl = Uri.parse('http://127.0.0.1:8000/api/v1/comments/$productId');
   
   try {
@@ -859,15 +844,14 @@ Future<void> getCommentsForProduct(int productId) async {
 
     if (response.statusCode == 200) {
       final List<dynamic> comments = json.decode(response.body);
-      print('Danh sách bình luận: $comments');
-      
-      // Cập nhật lại UI bằng state management hoặc setState nếu cần
-      // updateComments(comments);
+      return comments;  // Trả về danh sách bình luận
     } else {
       print('Lỗi khi lấy bình luận');
+      return [];
     }
   } catch (e) {
     print('Lỗi khi lấy bình luận: $e');
+    return [];
   }
 }
 

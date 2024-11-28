@@ -16,7 +16,7 @@ import 'package:frontend/ui/screens/cart_page.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 // Khởi tạo đối tượng lưu trữ bảo mật
-final storage = const FlutterSecureStorage();
+const storage = FlutterSecureStorage();
 
 // Hàm để lưu token vào Secure Storage
 Future<void> saveToken(String token) async {

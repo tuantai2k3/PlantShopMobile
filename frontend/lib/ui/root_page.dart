@@ -4,7 +4,7 @@ import 'package:frontend/ui/screens/cart_page.dart';
 import 'package:frontend/ui/screens/favorite_page.dart';
 import 'package:frontend/ui/screens/home_page.dart';
 import 'package:frontend/ui/screens/profile_page.dart';
-import 'package:frontend/ui/screens/widgets/base_scaffold.dart';
+import 'package:frontend/ui/screens/widgets/base_scaff.dart';  
 import 'package:frontend/models/product.dart';
 import 'package:frontend/providers/cart_provider.dart';
 import 'package:http/http.dart' as http;
@@ -24,19 +24,11 @@ class _RootPageState extends State<RootPage> {
   bool _isLoading = false;
 
   final String _baseUrl = "http://127.0.0.1:8000/api/v1";
-  
-  final List<Widget> _pages = [
-    const HomePage(),
-    FavoritePage(),
-    const CartPage(),
-    const ProfilePage(),
-  ];
 
   @override
   void initState() {
     super.initState();
     _loadInitialData();
-    // Load cart data
     Provider.of<CartProvider>(context, listen: false).loadCart();
   }
 
@@ -100,42 +92,38 @@ class _RootPageState extends State<RootPage> {
     }
   }
 
+  Widget _buildCurrentPage() {
+    switch (_selectedIndex) {
+      case 0:
+        return const HomePage();
+      case 1:
+        return FavoritePage();
+      case 2:
+        return const CartPage();
+      case 3:
+        return const ProfilePage();
+      default:
+        return const HomePage();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
+    // Define the appBar here instead of in BaseScaffold
+    final AppBar appBar = AppBar(
+      title: Text(_selectedIndex == 0 ? 'Trang chủ' : 
+                   _selectedIndex == 1 ? 'Yêu thích' : 
+                   _selectedIndex == 2 ? 'Giỏ hàng' : 'Tài khoản'),
+      centerTitle: true,
+    );
+
+    return BaseScaffold(
+      currentIndex: _selectedIndex,
+      onIndexChanged: (index) => setState(() => _selectedIndex = index),
+      appBar: appBar,  // Pass appBar to BaseScaffold
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
-          : IndexedStack(
-              index: _selectedIndex,
-              children: _pages,
-            ),
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: _selectedIndex,
-        onDestinationSelected: (index) => setState(() => _selectedIndex = index),
-        destinations: const [
-          NavigationDestination(
-            icon: Icon(Icons.home_outlined),
-            selectedIcon: Icon(Icons.home),
-            label: 'Trang chủ',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.favorite_outline),
-            selectedIcon: Icon(Icons.favorite),
-            label: 'Yêu thích',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.shopping_cart_outlined),
-            selectedIcon: Icon(Icons.shopping_cart),
-            label: 'Giỏ hàng',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.person_outline),
-            selectedIcon: Icon(Icons.person),
-            label: 'Tài khoản',
-          ),
-        ],
-      ),
+          : _buildCurrentPage(),
     );
   }
 }

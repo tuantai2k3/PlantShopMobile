@@ -176,39 +176,33 @@ class CheckoutPage extends StatelessWidget {
                   ),
                   const SizedBox(height: 32),
                   ElevatedButton(
-  onPressed: () {
-    if (_formKey.currentState!.validate()) {
-      if (_selectedPaymentMethod == 'Ngân hàng') {
-        // Nếu thanh toán qua ngân hàng, chuyển đến trang thanh toán ngân hàng
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-              builder: (context) => const BankPaymentPage()),
-        );
-      } else if (_selectedPaymentMethod == 'Thanh toán khi nhận hàng') {
-        // Nếu thanh toán bằng tiền mặt, chuyển thẳng đến trang thành công
-        Navigator.pushNamed(context, '/checkout-success');
-      } else {
-        // Nếu chọn phương thức thanh toán khác như Momo, bạn có thể xử lý tương tự
-        cart.checkout(context, _selectedPaymentMethod).then((success) {
-          if (success) {
-            Navigator.pushNamed(context, '/checkout-success');
-          }
-        });
-      }
-    }
-  },
-  style: ElevatedButton.styleFrom(
-    padding: const EdgeInsets.symmetric(vertical: 16),
-    minimumSize: const Size(double.infinity, 50),
-  ),
-  child: const Text(
-    'Xác nhận thanh toán',
-    style: TextStyle(fontSize: 16),
-  ),
-)
+                    onPressed: () {
+                      if (_formKey.currentState!.validate()) {
+                        if (_selectedPaymentMethod == 'Ngân hàng') {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => const BankPaymentPage()),
+                          );
+                        } else {
+                        cart.checkout(context, _selectedPaymentMethod).then((success) {
+  if (success) {
+    Navigator.pushNamed(context, '/checkout-success');
+  }
+});
 
-
+                        }
+                      }
+                    },
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      minimumSize: const Size(double.infinity, 50),
+                    ),
+                    child: const Text(
+                      'Xác nhận thanh toán',
+                      style: TextStyle(fontSize: 16),
+                    ),
+                  ),
                 ],
               ),
             ),

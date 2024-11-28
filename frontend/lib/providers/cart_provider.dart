@@ -162,93 +162,93 @@ class CartProvider extends ChangeNotifier {
     return _items.any((item) => item.id == product.id);
   }
 
-  // Hàm xóa giỏ hàng
+  // Hàm xóa giỏ hàng  
   void clearCart() {
     _items = [];
     notifyListeners();
   }
 
   // Hàm thanh toán giỏ hàng với phương thức thanh toán
-  Future<bool> checkout(BuildContext context, String paymentMethod) async {
-    if (_items.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Giỏ hàng của bạn trống.'),
-          backgroundColor: Colors.red,
-        ),
-      );
-      return false;
-    }
+ Future<bool> checkout(BuildContext context, String paymentMethod) async {
+  if (_items.isEmpty) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Giỏ hàng của bạn trống.'),
+        backgroundColor: Colors.red,
+      ),
+    );
+    return false;
+  }
 
-    try {
-      isLoading = true;
-      notifyListeners();
+  try {
+    isLoading = true;
+    notifyListeners();
 
-      final headers = await _getHeaders();
-      final response = await http
-          .post(
-            Uri.parse('$_baseUrl/cart/checkout'),
-            headers: headers,
-            body: json.encode({
-              'items': _items.map((item) {
-                return {
-                  'product_id': item.id,
-                  'quantity': item.quantity,
-                };
-              }).toList(),
-              'payment_method': paymentMethod,
-            }),
-          )
-          .timeout(const Duration(seconds: 10));
+    final headers = await _getHeaders();
+    final response = await http
+        .post(
+          Uri.parse('$_baseUrl/cart/checkout'),
+          headers: headers,
+          body: json.encode({
+            'items': _items.map((item) {
+              return {
+                'product_id': item.id,
+                'quantity': item.quantity,
+              };
+            }).toList(),
+            'payment_method': paymentMethod,
+          }),
+        )
+        .timeout(const Duration(seconds: 10));
 
-      print('Checkout response: ${response.body}');
+    print('Checkout response: ${response.body}');
 
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        if (data['success'] == true) {
-          // Xóa giỏ hàng và cập nhật UI
-          clearCart();
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Thanh toán thành công!'),
-              backgroundColor: Colors.green,
-            ),
-          );
-
-          // Quay lại trang trước (trang chủ hoặc giỏ hàng)
-          Navigator.pop(context); // Quay lại trang trước
-          return true;
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(data['message'] ?? 'Thanh toán thất bại.'),
-              backgroundColor: Colors.red,
-            ),
-          );
-        }
-      } else {
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body);
+      if (data['success'] == true) {
+        clearCart();
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Thanh toán thất bại. Vui lòng thử lại.'),
+            content: Text('Thanh toán thành công!'),
+            backgroundColor: Colors.green,
+          ),
+        );
+
+        // Quay lại trang trước (trang chủ hoặc giỏ hàng)
+        Navigator.pop(context);  // Quay lại trang trước
+        return true;
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(data['message'] ?? 'Thanh toán thất bại.'),
             backgroundColor: Colors.red,
           ),
         );
       }
-      return false;
-    } catch (e) {
-      print('Error during checkout: $e');
+    } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Không thể kết nối tới server: $e'),
+        const SnackBar(
+          content: Text('Thanh toán thất bại. Vui lòng thử lại.'),
           backgroundColor: Colors.red,
         ),
       );
-      return false;
-    } finally {
-      isLoading = false;
-      notifyListeners();
     }
+    return false;
+  } catch (e) {
+    print('Error during checkout: $e');
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Không thể kết nối tới server: $e'),
+        backgroundColor: Colors.red,
+      ),
+    );
+    return false;
+  } finally {
+    isLoading = false;
+    notifyListeners();
   }
+}
+
 
   // Hàm để xử lý khi bấm nút back
   void handleBackAction(Product product) {
@@ -258,3 +258,4 @@ class CartProvider extends ChangeNotifier {
     }
   }
 }
+

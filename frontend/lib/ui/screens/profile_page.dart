@@ -14,7 +14,7 @@ class ProfilePage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     Size size = MediaQuery.of(context).size;
 
-    // Lấy trạng thái đăng nhập từ loginProvider
+    // Lấy trạng thái đăng nhập từ userProvider
     final user = ref.watch(userProvider);
 
     if (user == null) {
@@ -88,7 +88,7 @@ class ProfilePage extends ConsumerWidget {
                         // Điều hướng đến trang MyProfile
                         Navigator.push(
                           context,
-                          MaterialPageRoute(builder: (_) => MyProfile()),
+                          MaterialPageRoute(builder: (_) => const MyProfile()),  // Đảm bảo MyProfile đã được import
                         );
                       },
                     ),
@@ -109,16 +109,16 @@ class ProfilePage extends ConsumerWidget {
                       title: 'Chia sẻ',
                     ),
                     ProfileWidget(
-  icon: Icons.logout,
-  title: 'Đăng xuất',
-  onTap: () async {
-    // Gọi phương thức logout từ AuthProvider
-    await ref.read(authProvider.notifier).logout();
-       // Thực hiện điều hướng về màn hình đăng nhập và reload lại trang ProfilePage
-    Navigator.pushAndRemoveUntil(
-      context,
-      MaterialPageRoute(builder: (_) => const SignIn()), // Điều hướng đến màn hình đăng nhập
-      (route) => false, 
+                      icon: Icons.logout,
+                      title: 'Đăng xuất',
+                      onTap: () async {
+                        // Gọi phương thức logout từ AuthProvider
+                        await ref.read(authProvider.notifier).logout();
+                        // Thực hiện điều hướng về màn hình đăng nhập và reload lại trang ProfilePage
+                        Navigator.pushAndRemoveUntil(
+                          context,
+                          MaterialPageRoute(builder: (_) => const SignIn()), // Điều hướng đến màn hình đăng nhập
+                          (route) => false, 
                         );
                       },
                     ),

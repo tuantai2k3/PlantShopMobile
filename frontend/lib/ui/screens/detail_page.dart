@@ -30,6 +30,7 @@ class _DetailPageState extends State<DetailPage> {
   int _currentImageIndex = 0;
   final PageController _pageController = PageController();
   int _quantity = 1;
+  final TextEditingController reviewController = TextEditingController();
 
   final String baseUrl = "http://127.0.0.1:8000/api/v1";
 
@@ -57,9 +58,17 @@ class _DetailPageState extends State<DetailPage> {
           });
         } else {
           _showSnackBar('Không thể tải thông tin sản phẩm', Colors.red);
+          setState(() {
+            _isLoading = false;
+            product = null;
+          });
         }
       } else {
         _showSnackBar('Không thể tải thông tin sản phẩm', Colors.red);
+        setState(() {
+          _isLoading = false;
+          product = null;
+        });
       }
     } catch (e) {
       print("Error loading product details: $e");
@@ -87,86 +96,95 @@ class _DetailPageState extends State<DetailPage> {
     }
   }
 
-Future<void> _loadReviews() async {
-  try {
-    final response = await http.get(
-      Uri.parse('$baseUrl/comments?product_id=${widget.productId}'),
-      headers: {"Content-Type": "application/json"},
-    );
+  Future<void> _loadReviews() async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/comments?product_id=${widget.productId}'),
+        headers: {
+          "Accept": "application/json",
+        },
+      );
 
-    if (response.statusCode == 200) {
-      final Map<String, dynamic> responseData = json.decode(response.body);
-      final List<Map<String, dynamic>> loadedReviews = List<Map<String, dynamic>>.from(responseData['data'] ?? []);
-      setState(() {
-        reviews = loadedReviews;
-      });
-    } else {
-      _showSnackBar('Không thể tải bình luận', Colors.red);
-    }
-  } catch (e) {
-    print("Error loading reviews: $e");
-    _showSnackBar('Lỗi khi tải bình luận', Colors.red);
-  }
-}
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> responseData = json.decode(response.body);
+        // Accessing the 'data' array from the response
+        final List<dynamic> commentsData = responseData['data'];
 
-
-
-
-Future<void> _addReview(String content) async {
-  if (content.isEmpty) {
-    _showSnackBar('Vui lòng nhập nội dung bình luận', Colors.red);
-    return;
-  }
-
-  try {
-    final response = await http.post(
-      Uri.parse('$baseUrl/comments'),
-      headers: {
-        "Content-Type": "application/json",
-        "Accept": "application/json"
-      },
-      body: json.encode({
-        'content': content,
-        'name': 'Anonymous', // Tên người dùng có thể lấy từ thông tin người dùng hiện tại
-        'url': 'user-comment',
-        'product_id': widget.productId.toString(),
-      }),
-    );
-
-    print('Response status: ${response.statusCode}');
-    print('Response body: ${response.body}');
-
-    if (response.statusCode == 201 || response.statusCode == 200) {
-      final Map<String, dynamic> newReview = {
-        'user': 'Bạn', // Hoặc tên người dùng thực tế nếu có
-        'content': content,
-        'created_at': DateTime.now().toIso8601String(),
-        'product_id': widget.productId,
-      };
-
-      // Cập nhật lại giao diện với bình luận mới
-      setState(() {
-        reviews.insert(0, newReview);  // Chèn bình luận mới vào đầu danh sách
-      });
-
-      _showSnackBar('Đã thêm bình luận thành công!', Colors.green);
-    } else {
-      final errorData = json.decode(response.body);
-      String errorMessage = 'Không thể thêm bình luận. ';
-      if (errorData['errors'] != null) {
-        errorMessage += (errorData['errors'] as Map<String, dynamic>)
-            .values
-            .expand((x) => x as List<dynamic>)
-            .join(', ');
+        setState(() {
+          reviews = commentsData
+              .map((item) => {
+                    'id': item['id'],
+                    'user_id': item['user_id'],
+                    'name': item['name'] ?? 'Anonymous',
+                    'email': item['email'],
+                    'url': item['url'],
+                    'content': item['content'],
+                    'status': item['status'],
+                    'created_at': item['created_at'],
+                    'updated_at': item['updated_at'],
+                    'product_id': item['product_id'],
+                  })
+              .toList();
+        });
+      } else {
+        _showSnackBar('Không thể tải bình luận', Colors.red);
+        setState(() => reviews = []);
       }
-      _showSnackBar(errorMessage, Colors.red);
+    } catch (e) {
+      print("Error loading reviews: $e");
+      _showSnackBar('Lỗi khi tải bình luận', Colors.red);
+      setState(() => reviews = []);
     }
-  } catch (e) {
-    print('Error adding comment: $e');
-    _showSnackBar('Đã xảy ra lỗi khi thêm bình luận', Colors.red);
   }
-}
 
+  Future<void> _addReview(String content) async {
+    if (content.isEmpty) {
+      _showSnackBar('Vui lòng nhập nội dung bình luận', Colors.red);
+      return;
+    }
+
+    final name = 'Anonymous'; // Có thể thay bằng tên người dùng thực tế
+    final data = {
+      'name': name,
+      'content': content,
+      'url': 'user-comment',
+      'product_id': widget.productId.toString(),
+    };
+
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/comments'),
+        headers: {
+          "Content-Type": "application/json",
+          "Accept": "application/json"
+        },
+        body: json.encode(data),
+      );
+
+      if (response.statusCode == 201 || response.statusCode == 200) {
+        _showSnackBar('Đã thêm bình luận thành công!', Colors.green);
+
+        // Sau khi thêm bình luận thành công, gọi lại phương thức _loadReviews để tải lại danh sách bình luận
+        await _loadReviews();
+        setState(() {
+          // Gọi setState để UI cập nhật lại với danh sách bình luận mới
+        });
+      } else {
+        final errorData = json.decode(response.body);
+        String errorMessage = 'Không thể thêm bình luận. ';
+        if (errorData['errors'] != null) {
+          errorMessage += (errorData['errors'] as Map<String, dynamic>)
+              .values
+              .expand((x) => x as List<dynamic>)
+              .join(', ');
+        }
+        _showSnackBar(errorMessage, Colors.red);
+      }
+    } catch (e) {
+      print('Error adding comment: $e');
+      _showSnackBar('Đã xảy ra lỗi khi thêm bình luận', Colors.red);
+    }
+  }
 
   Future<void> _addToCart(CartProvider cartProvider) async {
     if (product != null) {
@@ -378,7 +396,8 @@ Future<void> _addReview(String content) async {
           Row(
             children: [
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
                   color: product!.isSold == 1
                       ? Colors.green.withOpacity(0.1)
@@ -518,88 +537,6 @@ Future<void> _addReview(String content) async {
       ),
     );
   }
-Widget _buildReviews() {
-  final TextEditingController reviewController = TextEditingController();
-
-  return Container(
-    padding: const EdgeInsets.all(16),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'Đánh giá sản phẩm',
-          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-        ),
-        const SizedBox(height: 12),
-        if (reviews.isEmpty)
-          const Text('Chưa có đánh giá nào')
-        else
-          ListView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: reviews.length,
-            itemBuilder: (context, index) {
-              final review = reviews[index];
-              return ListTile(
-                title: Text(review['user']),
-                subtitle: Text(review['content']),
-                leading: CircleAvatar(
-                  child: Text(review['user'][0]),
-                ),
-                trailing: Text(
-                  DateFormat('dd/MM/yyyy').format(DateTime.parse(review['created_at'])),
-                  style: const TextStyle(fontSize: 12, color: Colors.grey),
-                ),
-              );
-            },
-          ),
-        const Divider(),
-        Card(
-          elevation: 0,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
-            side: BorderSide(color: Colors.grey.shade300),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: reviewController,
-                    maxLines: null,
-                    decoration: const InputDecoration(
-                      hintText: 'Viết đánh giá của bạn...',
-                      border: InputBorder.none,
-                      contentPadding: EdgeInsets.symmetric(vertical: 8),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                IconButton(
-                  icon: Icon(
-                    Icons.send,
-                    color: Constants.primaryColor,
-                  ),
-                  onPressed: () {
-                    final content = reviewController.text.trim();
-                    if (content.isNotEmpty) {
-                      _addReview(content);
-                      reviewController.clear();
-                    }
-                  },
-                ),
-              ],
-            ),
-          ),
-        ),
-      ],
-    ),
-  );
-}
-
-
 
   Widget _buildBottomBar() {
     return BottomAppBar(
@@ -661,4 +598,279 @@ Widget _buildReviews() {
       );
     }
   }
+
+  Widget _buildReviews() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Đánh giá sản phẩm',
+            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 12),
+          if (reviews.isEmpty)
+            const Text(
+              'Chưa có đánh giá nào',
+              style: TextStyle(color: Colors.grey),
+            )
+          else
+            ListView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: reviews.length,
+              itemBuilder: (context, index) {
+                final review = reviews[index];
+                return Card(
+                  margin: const EdgeInsets.only(bottom: 8),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    side: BorderSide(color: Colors.grey.shade300),
+                  ),
+                  child: ListTile(
+                    title: Row(
+                      children: [
+                        Text(
+                          review['name'] ?? 'Anonymous',
+                          style: const TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                        if (review['status'] == 'active')
+                          Container(
+                            margin: const EdgeInsets.only(left: 8),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.green.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: const Text(
+                              'Active',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.green,
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                    subtitle: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const SizedBox(height: 4),
+                        Text(review['content'] ?? ''),
+                        const SizedBox(height: 4),
+                        Text(
+                          DateFormat('dd/MM/yyyy HH:mm')
+                              .format(DateTime.parse(review['created_at'])),
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey,
+                          ),
+                        ),
+                      ],
+                    ),
+                    leading: CircleAvatar(
+                      backgroundColor: Colors.blue.withOpacity(0.1),
+                      child: Text(
+                        (review['name'] != null &&
+                                review['name'].toString().isNotEmpty)
+                            ? review['name'].toString()[0].toUpperCase()
+                            : 'A',
+                        style: TextStyle(
+                          color: Constants.primaryColor,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
+          const Divider(),
+          Card(
+            elevation: 0,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+              side: BorderSide(color: Colors.grey.shade300),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: reviewController,
+                      maxLines: null,
+                      decoration: const InputDecoration(
+                        hintText: 'Viết đánh giá của bạn...',
+                        border: InputBorder.none,
+                        contentPadding: EdgeInsets.symmetric(vertical: 8),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  IconButton(
+                    icon: Icon(
+                      Icons.send,
+                      color: Constants.primaryColor,
+                    ),
+                    onPressed: () {
+                      final content = reviewController.text.trim();
+                      if (content.isNotEmpty) {
+                        _addReview(content);
+                        reviewController.clear();
+                      }
+                    },
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+  //-Thay anonymous thành username nhưng đang lỗi-//
+  // Widget _buildReviews() {
+  // final currentUser = ref.watch(authProvider).user;
+
+  // return Container(
+  //   padding: const EdgeInsets.all(16),
+  //   child: Column(
+  //     crossAxisAlignment: CrossAxisAlignment.start,
+  //     children: [
+  //       const Text(
+  //         'Đánh giá sản phẩm',
+  //         style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+  //       ),
+  //       const SizedBox(height: 12),
+  //       if (reviews.isEmpty)
+  //         const Text(
+  //           'Chưa có đánh giá nào',
+  //           style: TextStyle(color: Colors.grey),
+  //         )
+  //       else
+  //         ListView.builder(
+  //           shrinkWrap: true,
+  //           physics: const NeverScrollableScrollPhysics(),
+  //           itemCount: reviews.length,
+  //           itemBuilder: (context, index) {
+  //             final review = reviews[index];
+  //             final reviewerName = review['name'] ??
+  //               (currentUser?.fullName.isNotEmpty ?? false
+  //                 ? currentUser?.fullName
+  //                 : currentUser?.username ?? 'Anonymous');
+
+  //               return Card(
+  //                 margin: const EdgeInsets.only(bottom: 8),
+  //                 shape: RoundedRectangleBorder(
+  //                   borderRadius: BorderRadius.circular(8),
+  //                   side: BorderSide(color: Colors.grey.shade300),
+  //                 ),
+  //                 child: ListTile(
+  //                   title: Row(
+  //                     children: [
+  //                       Text(
+  //                         reviewerName,
+  //                         style: const TextStyle(fontWeight: FontWeight.bold),
+  //                       ),
+  //                       if (review['status'] == 'active')
+  //                         Container(
+  //                           margin: const EdgeInsets.only(left: 8),
+  //                           padding: const EdgeInsets.symmetric(
+  //                               horizontal: 8, vertical: 2),
+  //                           decoration: BoxDecoration(
+  //                             color: Colors.green.withOpacity(0.1),
+  //                             borderRadius: BorderRadius.circular(12),
+  //                           ),
+  //                           child: const Text(
+  //                             'Active',
+  //                             style:
+  //                                 TextStyle(fontSize: 12, color: Colors.green),
+  //                           ),
+  //                         ),
+  //                     ],
+  //                   ),
+  //                   subtitle: Column(
+  //                     crossAxisAlignment: CrossAxisAlignment.start,
+  //                     children: [
+  //                       const SizedBox(height: 4),
+  //                       Text(review['content'] ?? ''),
+  //                       const SizedBox(height: 4),
+  //                       Text(
+  //                         DateFormat('dd/MM/yyyy HH:mm')
+  //                             .format(DateTime.parse(review['created_at'])),
+  //                         style: const TextStyle(
+  //                           fontSize: 12,
+  //                           color: Colors.grey,
+  //                         ),
+  //                       ),
+  //                     ],
+  //                   ),
+  //                   leading: CircleAvatar(
+  //                     backgroundColor: Colors.blue.withOpacity(0.1),
+  //                     child: Text(
+  //                       (review['name'] != null &&
+  //                               review['name'].toString().isNotEmpty)
+  //                           ? review['name'].toString()[0].toUpperCase()
+  //                           : 'A',
+  //                       style: TextStyle(
+  //                         color: Constants.primaryColor,
+  //                         fontWeight: FontWeight.bold,
+  //                       ),
+  //                     ),
+  //                   ),
+  //                 ),
+  //               );
+  //             },
+  //           ),
+  //         const Divider(),
+  //         Card(
+  //           elevation: 0,
+  //           shape: RoundedRectangleBorder(
+  //             borderRadius: BorderRadius.circular(8),
+  //             side: BorderSide(color: Colors.grey.shade300),
+  //           ),
+  //           child: Padding(
+  //             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+  //             child: Row(
+  //               crossAxisAlignment: CrossAxisAlignment.end,
+  //               children: [
+  //                 Expanded(
+  //                   child: TextField(
+  //                     controller: reviewController,
+  //                     maxLines: null,
+  //                     decoration: const InputDecoration(
+  //                       hintText: 'Viết đánh giá của bạn...',
+  //                       border: InputBorder.none,
+  //                       contentPadding: EdgeInsets.symmetric(vertical: 8),
+  //                     ),
+  //                   ),
+  //                 ),
+  //                 const SizedBox(width: 8),
+  //                 IconButton(
+  //                   icon: Icon(
+  //                     Icons.send,
+  //                     color: Constants.primaryColor,
+  //                   ),
+  //                   onPressed: () {
+  //                     final content = reviewController.text.trim();
+  //                     if (content.isNotEmpty) {
+  //                       _addReview(content);
+  //                       reviewController.clear();
+  //                     }
+  //                   },
+  //                 ),
+  //               ],
+  //             ),
+  //           ),
+  //         ),
+  //       ],
+  //     ),
+  //   );
+  // }
 }

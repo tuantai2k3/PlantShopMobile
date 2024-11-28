@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 // Khởi tạo đối tượng lưu trữ bảo mật
-final storage = const FlutterSecureStorage();
+const storage = FlutterSecureStorage();
 
 class CheckoutSuccessPage extends StatelessWidget {
   const CheckoutSuccessPage({super.key});
@@ -46,7 +46,7 @@ class CheckoutSuccessPage extends StatelessWidget {
                   // Nếu có token (nghĩa là người dùng đã đăng nhập), điều hướng về trang chính
                   Navigator.pushNamedAndRemoveUntil(
                     context,
-                    '/home', // Điều hướng về trang home nếu người dùng đã đăng nhập
+                    '/main', // Điều hướng về trang home nếu người dùng đã đăng nhập
                     (route) => false, // Xóa toàn bộ stack trước đó
                   );
                 } else {

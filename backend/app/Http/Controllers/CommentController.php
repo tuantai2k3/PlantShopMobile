@@ -19,23 +19,24 @@ class CommentController extends Controller
     }
     public function index()
     {
-
         echo 'Current PHP version: ' . phpversion();
         $func = "comment_list";
         if(!$this->check_function($func))
         {
             return redirect()->route('unauthorized');
         }
-
-        $active_menu="comment_list";
+    
+        $active_menu = "comment_list";
         $breadcrumb = '
-        <li class="breadcrumb-item"><a href="#">/</a></li>
-        <li class="breadcrumb-item active" aria-current="page"> Danh sách bình luận </li>';
+            <li class="breadcrumb-item"><a href="#">/</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Danh sách bình luận</li>';
+            
+        // Lấy các bình luận theo product_id
         $comments = Comment::orderBy('id','DESC')->paginate($this->pagesize);
-        // categories
-        return view('backend.comment.index',compact('comments','breadcrumb','active_menu'));
-
+    
+        return view('backend.comment.index', compact('comments', 'breadcrumb', 'active_menu'));
     }
+    
     public function create()
     {
         $func = "comment_add";
@@ -65,12 +66,12 @@ class CommentController extends Controller
         $this->validate($request,[
             'name'=>'string|required',
             'content'=>'string|required',
-            'url'=>'string|required',
+            'product_id'=>'required|integer',
             'email'=>'string|nullable',
         ]);
         
         $data = $request->all();
-        $cat = Comment::create($data);
+        $comment = Comment::create($data); // Lưu vào bảng comments
         return redirect()->route('comment.index')->with('success','Tạo comment thành công!');
     }
     public function edit(string $id)
@@ -104,32 +105,29 @@ class CommentController extends Controller
         {
             return redirect()->route('unauthorized');
         }
-        //
+    
         $comment = Comment::find($id);
-        if($comment)
-        {
-            $this->validate($request,[
-                'name'=>'string|required',
-                'content'=>'string|required',
-                'url'=>'string|required',
-                'email'=>'string|nullable',
+        if ($comment) {
+            $this->validate($request, [
+                'name' => 'string|required',
+                'content' => 'string|required',
+                'product_id' => 'required|integer', // Validate product_id thay vì url
+                'email' => 'string|nullable',
             ]);
+    
             $data = $request->all();
             $status = $comment->fill($data)->save();
-            if($status){
-                return redirect()->route('comment.index')->with('success','Cập nhật thành công');
+    
+            if ($status) {
+                return redirect()->route('comment.index')->with('success', 'Cập nhật thành công');
+            } else {
+                return back()->with('error', 'Có lỗi xảy ra!');
             }
-            else
-            {
-                return back()->with('error','Something went wrong!');
-            }    
+        } else {
+            return back()->with('error', 'Không tìm thấy dữ liệu');
         }
-        else
-        {
-            return back()->with('error','Không tìm thấy dữ liệu');
-        }
-      
     }
+    
 
     /**
      * Remove the specified resource from storage.
@@ -184,22 +182,31 @@ class CommentController extends Controller
         {
             return redirect()->route('unauthorized');
         }
+    
         if($request->datasearch)
         {
-            $active_menu="comment_list";
-            $searchdata =$request->datasearch;
-            $comments = DB::table('comments')->where('content','LIKE','%'.$request->datasearch.'%')->orWhere('name','LIKE','%'.$request->datasearch.'%')->orWhere('url','LIKE','%'.$request->datasearch.'%')
-            ->paginate($this->pagesize)->withQueryString();
+            $active_menu = "comment_list";
+            $searchdata = $request->datasearch;
+    
+            // Tìm kiếm theo product_id hoặc nội dung bình luận
+            $comments = DB::table('comments')
+                ->where('content', 'LIKE', '%'.$request->datasearch.'%')
+                ->orWhere('name', 'LIKE', '%'.$request->datasearch.'%')
+                ->orWhere('product_id', 'LIKE', '%'.$request->datasearch.'%')
+                ->paginate($this->pagesize)
+                ->withQueryString();
+    
             $breadcrumb = '
-            <li class="breadcrumb-item"><a href="#">/</a></li>
-            <li class="breadcrumb-item  " aria-current="page"><a href="'.route('comment.index').'">bình luận</a></li>
-            <li class="breadcrumb-item active" aria-current="page"> tìm kiếm </li>';
-            return view('backend.comment.search',compact('comments','breadcrumb','searchdata','active_menu'));
+                <li class="breadcrumb-item"><a href="#">/</a></li>
+                <li class="breadcrumb-item"><a href="'.route('comment.index').'">Bình luận</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Tìm kiếm</li>';
+    
+            return view('backend.comment.search', compact('comments', 'breadcrumb', 'searchdata', 'active_menu'));
         }
         else
         {
             return redirect()->route('comment.index')->with('success','Không có thông tin tìm kiếm!');
         }
-
     }
+    
 }

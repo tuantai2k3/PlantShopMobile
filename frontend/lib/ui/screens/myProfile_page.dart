@@ -80,7 +80,7 @@ class MyProfile extends ConsumerWidget {
                 padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 40),
                 textStyle: const TextStyle(fontSize: 16),
               ),
-              child: Text("Chỉnh sửa hồ sơ"),
+              child: const Text("Chỉnh sửa hồ sơ"),
             ),
           ],
         ),
