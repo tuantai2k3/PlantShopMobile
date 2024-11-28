@@ -69,6 +69,8 @@ class MyApp extends ConsumerWidget {
         '/bank-payment': (context) => const BankPaymentPage(),
         '/scan': (context) => const ScanPage(),
         '/cart': (context) => const CartPage(),
+        '/checkout-success': (context) => const CheckoutSuccessPage(),
+        '/checkout': (context) => CheckoutPage(),
       },
     );
   }

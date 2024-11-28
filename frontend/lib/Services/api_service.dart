@@ -131,8 +131,8 @@ class ApiService {
   static Future<void> logout() async {
     // Xóa token hoặc làm gì đó khi người dùng đăng xuất
   }
-  //-Checkout-//
-Future<Map<String, dynamic>> checkout(List<Map<String, dynamic>> items) async {
+ Future<Map<String, dynamic>> checkout(
+  List<Map<String, dynamic>> items, String paymentMethod) async {
   try {
     if (_token == null) {
       return {
@@ -144,7 +144,10 @@ Future<Map<String, dynamic>> checkout(List<Map<String, dynamic>> items) async {
     final response = await http.post(
       Uri.parse('$baseUrl/cart/checkout'),
       headers: _headers,
-      body: jsonEncode({'items': items}),
+      body: jsonEncode({
+        'items': items,
+        'payment_method': paymentMethod,  // Add the payment method here
+      }),
     );
 
     print('Checkout Response Status: ${response.statusCode}');
@@ -177,6 +180,7 @@ Future<Map<String, dynamic>> checkout(List<Map<String, dynamic>> items) async {
     };
   }
 }
+
 
   // Password Reset Methods
   static Future<Map<String, dynamic>> forgotPassword(String email) async {

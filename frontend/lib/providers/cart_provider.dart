@@ -168,8 +168,8 @@ class CartProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  // Hàm thanh toán giỏ hàng
-  Future<bool> checkout(BuildContext context) async {
+  // Hàm thanh toán giỏ hàng với phương thức thanh toán
+  Future<bool> checkout(BuildContext context, String paymentMethod) async {
     if (_items.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -196,7 +196,7 @@ class CartProvider extends ChangeNotifier {
                   'quantity': item.quantity,
                 };
               }).toList(),
-              'payment_method': 'COD', // Hoặc 'Online' nếu dùng cổng thanh toán
+              'payment_method': paymentMethod,
             }),
           )
           .timeout(const Duration(seconds: 10));
@@ -206,6 +206,7 @@ class CartProvider extends ChangeNotifier {
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         if (data['success'] == true) {
+          // Xóa giỏ hàng và cập nhật UI
           clearCart();
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
@@ -213,6 +214,9 @@ class CartProvider extends ChangeNotifier {
               backgroundColor: Colors.green,
             ),
           );
+
+          // Quay lại trang trước (trang chủ hoặc giỏ hàng)
+          Navigator.pop(context); // Quay lại trang trước
           return true;
         } else {
           ScaffoldMessenger.of(context).showSnackBar(

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:frontend/providers/cart_provider.dart';
 import 'package:intl/intl.dart';
-import 'package:frontend/ui/screens/checkout_page.dart';
+import 'package:frontend/ui/screens/checkout_page.dart'; // Đảm bảo rằng bạn đã import CheckoutPage
 
 class CartPage extends StatelessWidget {
   const CartPage({super.key});
@@ -15,12 +15,14 @@ class CartPage extends StatelessWidget {
       appBar: AppBar(
         title: const Text('Giỏ hàng'),
       ),
-      body: Consumer<CartProvider>(
+      body: Consumer<CartProvider>(  // Dùng Consumer để lấy trạng thái giỏ hàng từ CartProvider
         builder: (context, cart, child) {
+          // Nếu đang tải dữ liệu, hiển thị CircularProgressIndicator
           if (cart.isLoading) {
             return const Center(child: CircularProgressIndicator());
           }
 
+          // Nếu giỏ hàng trống, hiển thị thông báo
           if (cart.items.isEmpty) {
             return const Center(child: Text('Giỏ hàng trống'));
           }
@@ -86,6 +88,7 @@ class CartPage extends StatelessWidget {
                   },
                 ),
               ),
+              // Phần tổng tiền và nút thanh toán
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
@@ -121,24 +124,25 @@ class CartPage extends StatelessWidget {
                         ),
                       ],
                     ),
-                 ElevatedButton(
-  onPressed: () {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => CheckoutPage(),
-      ),
-    );
-  },
-  style: ElevatedButton.styleFrom(
-    padding: const EdgeInsets.symmetric(
-      horizontal: 32,
-      vertical: 12,
-    ),
-  ),
-  child: const Text('Thanh toán'),
-),
-
+                    // Nút thanh toán
+                    ElevatedButton(
+                      onPressed: () {
+                        // Chuyển đến trang checkout khi người dùng nhấn nút thanh toán
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => CheckoutPage(),
+                          ),
+                        );
+                      },
+                      style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 32,
+                          vertical: 12,
+                        ),
+                      ),
+                      child: const Text('Thanh toán'),
+                    ),
                   ],
                 ),
               ),
