@@ -48,6 +48,56 @@ class User {
     group_id = 0,
   });
 
+  User copyWith({
+    int? id,
+    String? email,
+    String? code,
+    int? global_id,
+    String? full_name,
+    String? username,
+    String? password,
+    String? email_verified_at,
+    String? photo,
+    String? phone,
+    String? address,
+    String? description,
+    int? ship_id,
+    String? ugroup_id,
+    String? role,
+    int? budget,
+    int? totalrevenue,
+    int? totalpoint,
+    String? taxcode,
+    String? taxname,
+    String? taxaddress,
+    String? status,
+  }) {
+    return User(
+      id: id ?? this.id,
+      email: email ?? this.email,
+      code: code ?? this.code,
+      global_id: global_id ?? this.global_id,
+      full_name: full_name ?? this.full_name,
+      username: username ?? this.username,
+      password: password ?? this.password,
+      email_verified_at: email_verified_at ?? this.email_verified_at,
+      photo: photo ?? this.photo,
+      phone: phone ?? this.phone,
+      address: address ?? this.address,
+      description: description ?? this.description,
+      ship_id: ship_id ?? this.ship_id,
+      ugroup_id: ugroup_id ?? this.ugroup_id,
+      role: role ?? this.role,
+      budget: budget ?? this.budget,
+      totalrevenue: totalrevenue ?? this.totalrevenue,
+      totalpoint: totalpoint ?? this.totalpoint,
+      taxcode: taxcode ?? this.taxcode,
+      taxname: taxname ?? this.taxname,
+      taxaddress: taxaddress ?? this.taxaddress,
+      status: status ?? this.status,
+    );
+  }
+
   Map<String?, dynamic> toJson() {
     return {
       'id': id,
@@ -75,28 +125,30 @@ class User {
     };
   }
 
-  // Convert from JSON
   factory User.fromJson(Map<String?, dynamic> json) {
     return User(
       id: json['id'],
-      username: json['username'],
+      username: json['username'] ?? '',
       email: json['email'],
       password: json['password'],
       phone: json['phone'],
-      full_name: json['full_name'],
+      full_name: json['full_name'] ?? '',
       address: json['address'],
       ugroup_id: json['ugroup_id'],
       role: json['role'] ?? 'user',
-      group_id: json['group_id'],
       taxaddress: json['taxaddress'],
       status: json['status'] ?? 'inactive',
       description: json['description'],
       email_verified_at: json['email_verified_at'],
       code: json['code'],
       photo: json['photo'],
-      ship_id: json['ship_id'],
-      global_id: json['global_id'],
-      budget: json['budget'],
+      ship_id: json['ship_id'] ?? 0,
+      global_id: json['global_id'] ?? 0,
+      budget: json['budget'] ?? 0,
+      totalrevenue: json['totalrevenue'] ?? 0,
+      totalpoint: json['totalpoint'] ?? 0,
+      taxcode: json['taxcode'],
+      taxname: json['taxname'],
     );
   }
 }

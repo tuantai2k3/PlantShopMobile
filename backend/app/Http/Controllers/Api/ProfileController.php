@@ -1,440 +1,300 @@
 <?php
 
 namespace App\Http\Controllers\Api;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\Facades\Password;
+
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use Auth;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
 use App\Models\User;
-use Illuminate\Support\Facades\DB;
+use App\Models\Order;
+use App\Models\Wishlist;
+use App\Models\AddressBook;
+use App\Models\UserSetting;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Http\Response;
+
 class ProfileController extends Controller
 {
-    //
     public function __construct()
     {
-        $this->middleware('auth');
-
-
+        $this->middleware('auth:sanctum');
     }
-    public function order()
-    {
-        $data['detail']     = \App\Models\SettingDetail::find(1);
-        $data['categories'] = \App\Models\Category::where('status', 'active')->where('parent_id', null)->get();
-        $user               = auth()->user();
-        ////
-        $data['pagetitle']      = " Thông tin tài khoản ";
-        $data['pagebreadcrumb'] = '<nav aria-label="breadcrumb" class="theme-breadcrumb">
-        <ol class="breadcrumb">
-            <li class="breadcrumb-item"><a href="' . route('home') . '">Trang chủ</a></li>';
 
-        $data['pagebreadcrumb'] .= '  </ol> </nav>';
-        ///
-        $data['profile']        = $user;
-        $sql_total_order        = "select count(id) as total from orders where customer_id = " . $user->id . " and status = 'active'   ";
-        $data['totalorder']     = DB::select($sql_total_order)[0]->total;
-        $sql_total_preorder     = "select count(id) as total from orders where customer_id = " . $user->id . "  and status='pending'  ";
-        $data['totalpendorder'] = DB::select($sql_total_preorder)[0]->total;
-        $sql_total_wishlist     = "select count(id) as total from wishlists where user_id = " . $user->id . "    ";
-        $data['totalwishlist']  = DB::select($sql_total_wishlist)[0]->total;
-        $data['defaut_setting'] = \App\Models\UserSetting::where('user_id', $user->id)->first();
-        if ($data['defaut_setting'])
-        {
-            if ($data['defaut_setting']->ship_id)
-            {
-                $data['shipaddress'] = \App\Models\AddressBook::find($data['defaut_setting']->ship_id);
+    public function getProfile(Request $request)
+    {
+        try {
+            $user = $request->user();
+            
+            if (!$user) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Unauthorized'
+                ], Response::HTTP_UNAUTHORIZED);
             }
-            if ($data['defaut_setting']->invoice_id)
-            {
-                $data['invoiceaddress'] = \App\Models\AddressBook::find($data['defaut_setting']->invoice_id);
-            }
+
+            // Lấy thêm thông tin cần thiết
+            $userData = [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'address' => $user->address,
+                'phone' => $user->phone,
+                // Thêm các trường khác nếu cần
+            ];
+
+            return response()->json([
+                'success' => true,
+                'data' => $userData
+            ], Response::HTTP_OK);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error fetching profile',
+                'error' => $e->getMessage()
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
-
-        return view($this->front_view . '.profile.view', $data);
-
-    }
-    //view wishlist
-    public function viewWishlist()
-    {
-        $data['detail']     = \App\Models\SettingDetail::find(1);
-        $data['categories'] = \App\Models\Category::where('status', 'active')->where('parent_id', null)->get();
-        ////
-        $data['pagetitle'] = " Sản phẩm yêu thích ";
-        $data['links']     = array();
-        $link              = new \App\Models\Links();
-        $link->title       = 'Danh sách sản phẩm yêu thích';
-        $link->url         = '#';
-        array_push($data['links'], $link);
-        ///
-        $user                   = auth()->user();
-        $data['profile']        = $user;
-        $sql_total_order        = "select count(id) as total from orders where customer_id = " . $user->id . " and status = 'active'   ";
-        $data['totalorder']     = DB::select($sql_total_order)[0]->total;
-        $sql_total_preorder     = "select count(id) as total from orders where customer_id = " . $user->id . "  and status='pending'  ";
-        $data['totalpendorder'] = DB::select($sql_total_preorder)[0]->total;
-        $sql_total_wishlist     = "select count(id) as total from wishlists where user_id = " . $user->id . "    ";
-        $data['totalwishlist']  = DB::select($sql_total_wishlist)[0]->total;
-
-        $sql              = "select  d.* from (SELECT * from wishlists where user_id = "
-            . $user->id . ") as c left join products as d on c.product_id = d.id where d.status = 'active'  ";
-        $data['products'] = DB::select($sql);
-        return view($this->front_view . '.profile.wishlist', $data);
-    }
-    //view addres book
-    public function addressbook()
-    {
-        $data['detail']     = \App\Models\SettingDetail::find(1);
-        $data['categories'] = \App\Models\Category::where('status', 'active')->where('parent_id', null)->get();
-        ////
-        $data['pagetitle'] = " Address Book ";
-        $data['links']     = array();
-        $link              = new \App\Models\Links();
-        $link->title       = 'Danh sách địa chỉ';
-        $link->url         = '#';
-        array_push($data['links'], $link);
-        ///
-        $user                   = auth()->user();
-        $data['profile']        = $user;
-        $sql_total_order        = "select count(id) as total from orders where customer_id = " . $user->id . " and status = 'active'   ";
-        $data['totalorder']     = DB::select($sql_total_order)[0]->total;
-        $sql_total_preorder     = "select count(id) as total from orders where customer_id = " . $user->id . "  and status='pending'  ";
-        $data['totalpendorder'] = DB::select($sql_total_preorder)[0]->total;
-        $sql_total_wishlist     = "select count(id) as total from wishlists where user_id = " . $user->id . "    ";
-        $data['totalwishlist']  = DB::select($sql_total_wishlist)[0]->total;
-        $data['defaut_setting'] = \App\Models\UserSetting::where('user_id', $user->id)->first();
-        $data['addressbooks']   = \App\Models\AddressBook::where('user_id', $user->id)->get();
-        return view($this->front_view . '.profile.addressbook', $data);
     }
 
     public function updateProfile(Request $request)
     {
-        $this->validate($request, [
-            'full_name'   => 'string|required',
-            'address'     => 'string|required',
-            'photo'       => 'string|nullable',
-            'description' => 'string|nullable',
-        ]);
-        $data   = $request->all();
-        $user   = auth()->user();
-        $status = $user->fill($data)->save();
+        try {
+            $validator = Validator::make($request->all(), [
+                'full_name' => 'string|required|max:255',
+                'address' => 'string|required|max:255',
+                'photo' => 'image|mimes:jpeg,png,jpg,gif|max:2048',
+                'description' => 'string|nullable|max:1000',
+            ]);
 
-        if ($status)
-        {
+            if ($validator->fails()) {
+                return response()->json([
+                    'success' => false,
+                    'errors' => $validator->errors()
+                ], Response::HTTP_UNPROCESSABLE_ENTITY);
+            }
+
+            $user = $request->user();
+            $data = $request->only(['full_name', 'address', 'description']);
+
+            // Xử lý upload ảnh
+            if ($request->hasFile('photo')) {
+                // Xóa ảnh cũ nếu có
+                if ($user->photo) {
+                    Storage::disk('public')->delete($user->photo);
+                }
+                
+                $photoPath = $request->file('photo')->store('photos/users', 'public');
+                $data['photo'] = $photoPath;
+            }
+
+            $user->update($data);
+
             return response()->json([
                 'success' => true,
-                'message' => 'Bạn đã cập nhật thành công',
-                'user'    => $user,
-            ], 200);
+                'message' => 'Profile updated successfully',
+                'data' => $user
+            ], Response::HTTP_OK);
 
-        } else
-        {
+        } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Lỗi trong quá trình cập nhật!',
-
-            ], 200);
+                'message' => 'Error updating profile',
+                'error' => $e->getMessage()
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 
-    public function viewDasboard()
-    {
-        $data['detail']     = \App\Models\SettingDetail::find(1);
-        $data['categories'] = \App\Models\Category::where('status', 'active')->where('parent_id', null)->get();
-        $user               = auth()->user();
-        ////
-        $data['pagetitle'] = " Thông tin tài khoản ";
-        $data['links']     = array();
-        $link              = new \App\Models\Links();
-        $link->title       = 'Thông tin tài khoản';
-        $link->url         = '#';
-        array_push($data['links'], $link);
-        ///
-        $data['profile']        = $user;
-        $sql_total_order        = "select count(id) as total from orders where customer_id = " . $user->id . " and status = 'active'   ";
-        $data['totalorder']     = DB::select($sql_total_order)[0]->total;
-        $sql_total_preorder     = "select count(id) as total from orders where customer_id = " . $user->id . "  and status='pending'  ";
-        $data['totalpendorder'] = DB::select($sql_total_preorder)[0]->total;
-        $sql_total_wishlist     = "select count(id) as total from wishlists where user_id = " . $user->id . "    ";
-        $data['totalwishlist']  = DB::select($sql_total_wishlist)[0]->total;
-        $data['defaut_setting'] = \App\Models\UserSetting::where('user_id', $user->id)->first();
-        if ($data['defaut_setting'])
-        {
-            if ($data['defaut_setting']->ship_id)
-            {
-                $data['shipaddress'] = \App\Models\AddressBook::find($data['defaut_setting']->ship_id);
-            }
-            if ($data['defaut_setting']->invoice_id)
-            {
-                $data['invoiceaddress'] = \App\Models\AddressBook::find($data['defaut_setting']->invoice_id);
-            }
-        }
-
-        return view($this->front_view . '.profile.view', $data);
-
-    }
-    public function createEdit()
-    {
-        $data['detail']     = \App\Models\SettingDetail::find(1);
-        $data['categories'] = \App\Models\Category::where('status', 'active')->where('parent_id', null)->get();
-        $user               = auth()->user();
-        ////
-        $data['pagetitle']      = " Điều chỉnh thông tin tài khoản ";
-        $data['pagebreadcrumb'] = '<nav aria-label="breadcrumb" class="theme-breadcrumb">
-         <ol class="breadcrumb">
-             <li class="breadcrumb-item"><a href="' . route('home') . '">Trang chủ</a></li>';
-
-        $data['pagebreadcrumb'] .= '  </ol> </nav>';
-        ///
-        $data['profile'] = $user;
-        return view($this->front_view . '.profile.edit', $data);
-    }
-    public function setDefaultInvoice(Request $request)
-    {
-        $this->validate($request, [
-            'id' => 'required|numeric',
-        ]);
-        $id              = $request->id;
-        $user            = auth()->user();
-        $default_setting = \App\Models\UserSetting::where('user_id', $user->id)->first();
-        $address         = \App\Models\AddressBook::find($id);
-        if (! $address)
-        {
-            return response()->json(['status' => false, 'msg' => 'Không tìm thấy dữ liệu']);
-        }
-        if (! $default_setting)
-        {
-            $default_setting          = new \App\Models\UserSetting();
-            $default_setting->user_id = $user->id;
-
-        }
-        $default_setting->invoice_id = $id;
-        $default_setting->save();
-        return response()->json(['status' => true, 'msg' => 'Cập nhật thành công!']);
-    }
-    public function deleteAddress($id)
-    {
-        $user    = auth()->user();
-        $address = \App\Models\AddressBook::find($id);
-        if (! $address)
-        {
-            return response()->json(['status' => false, 'msg' => 'Không tìm thấy dữ liệu']);
-        }
-        $default_setting = \App\Models\UserSetting::where('user_id', $user->id)->first();
-        if ($default_setting->ship_id == $id)
-        {
-            $default_setting->ship_id = null;
-        }
-        if ($default_setting->invoice_id == $id)
-        {
-            $default_setting->invoice_id = null;
-        }
-        $default_setting->save();
-        $address->delete();
-        return back()->with('success', "Xóa thành công!");
-    }
-    public function setDefaultShip(Request $request)
-    {
-        $this->validate($request, [
-            'id' => 'required|numeric',
-        ]);
-        $id              = $request->id;
-        $user            = auth()->user();
-        $default_setting = \App\Models\UserSetting::where('user_id', $user->id)->first();
-        $address         = \App\Models\AddressBook::find($id);
-        if (! $address)
-        {
-            return response()->json(['status' => false, 'msg' => 'Không tìm thấy dữ liệu']);
-        }
-        if (! $default_setting)
-        {
-            $default_setting          = new \App\Models\UserSetting();
-            $default_setting->user_id = $user->id;
-
-        }
-        $default_setting->ship_id = $id;
-        $default_setting->save();
-        return response()->json(['status' => true, 'msg' => 'Cập nhật thành công!']);
-    }
     public function changePassword(Request $request)
     {
-        $this->validate($request, [
-            'current_password' => 'required|string',
-            'new_password'     => 'required|confirmed|min:8|string',
-        ]);
-        $auth = \Auth::user();
-        // dd($request->get('current_password'));
-        // The passwords matches
-        if (! Hash::check($request->get('current_password'), $auth->password))
-        {
-            return back()->with('error', "Current Password is Invalid");
-        }
+        try {
+            $validator = Validator::make($request->all(), [
+                'current_password' => 'required|string',
+                'new_password' => 'required|string|min:8|confirmed',
+                'new_password_confirmation' => 'required'
+            ]);
 
-        // Current password and new password same
-        if (strcmp($request->get('current_password'), $request->new_password) == 0)
-        {
-            return redirect()->back()->with("error", "New Password cannot be same as your current password.");
-        }
+            if ($validator->fails()) {
+                return response()->json([
+                    'success' => false,
+                    'errors' => $validator->errors()
+                ], Response::HTTP_UNPROCESSABLE_ENTITY);
+            }
 
-        $user           = User::find($auth->id);
-        $user->password = Hash::make($request->new_password);
-        $user->save();
-        return back()->with('success', "Password Changed Successfully");
+            $user = $request->user();
+
+            if (!Hash::check($request->current_password, $user->password)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Current password is incorrect'
+                ], Response::HTTP_UNPROCESSABLE_ENTITY);
+            }
+
+            if ($request->current_password === $request->new_password) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'New password must be different from current password'
+                ], Response::HTTP_UNPROCESSABLE_ENTITY);
+            }
+
+            $user->update([
+                'password' => Hash::make($request->new_password)
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Password changed successfully'
+            ], Response::HTTP_OK);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error changing password',
+                'error' => $e->getMessage()
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
     }
-    public function addInvoice(Request $request)
+    public function addAddress(Request $request)
     {
-        $this->validate($request, [
-            'full_name' => 'string|required',
-            'phone'     => 'string|required',
-            'address'   => 'string|required',
+        try {
+            $validator = Validator::make($request->all(), [
+                'full_name' => 'required|string|max:255',
+                'phone' => 'required|string|max:20',
+                'address' => 'required|string|max:255',
+                'type' => 'required|in:shipping,invoice',
+                'is_default' => 'boolean'
+            ]);
 
-        ]);
+            if ($validator->fails()) {
+                return response()->json([
+                    'success' => false,
+                    'errors' => $validator->errors()
+                ], Response::HTTP_UNPROCESSABLE_ENTITY);
+            }
 
-        $data            = $request->all();
-        $user            = auth()->user();
-        $data['user_id'] = $user->id;
-        $address         = \App\Models\AddressBook::create($data);
-        if (! $address)
-        {
-            return back()->with('error', 'Có lỗi xãy ra!');
+            $user = $request->user();
+            $data = $request->all();
+            $data['user_id'] = $user->id;
+
+            $address = AddressBook::create($data);
+
+            // Xử lý địa chỉ mặc định
+            if ($request->is_default) {
+                $userSetting = UserSetting::firstOrCreate(
+                    ['user_id' => $user->id],
+                    []
+                );
+
+                $field = $request->type === 'shipping' ? 'ship_id' : 'invoice_id';
+                $userSetting->$field = $address->id;
+                $userSetting->save();
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Address added successfully',
+                'data' => $address
+            ], Response::HTTP_CREATED);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error adding address',
+                'error' => $e->getMessage()
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
-        $default_setting = \App\Models\UserSetting::where('user_id', $user->id)->first();
-        if (! $default_setting)
-        {
-            $default_setting          = new \App\Models\UserSetting();
-            $default_setting->user_id = $user->id;
-            $default_setting->save();
-        }
-        if (isset($data['default']) && $data['default'] == 1)
-        {
-            $default_setting->invoice_id = $address->id;
-            $default_setting->save();
-        }
-        return back()
-            ->withSuccess('Bạn đã đăng ký thành công và đăng nhập');
     }
-    public function addShip(Request $request)
+
+    public function deleteAddress($id, Request $request)
     {
-        $this->validate($request, [
-            'full_name' => 'string|required',
-            'phone'     => 'string|required',
-            'address'   => 'string|required',
+        try {
+            $user = $request->user();
+            $address = AddressBook::where('id', $id)
+                ->where('user_id', $user->id)
+                ->first();
 
-        ]);
+            if (!$address) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Address not found'
+                ], Response::HTTP_NOT_FOUND);
+            }
 
-        $data            = $request->all();
-        $user            = auth()->user();
-        $data['user_id'] = $user->id;
-        $address         = \App\Models\AddressBook::create($data);
-        if (! $address)
-        {
-            return back()->with('error', 'Có lỗi xãy ra!');
+            // Xóa reference trong user settings nếu là địa chỉ mặc định
+            $userSetting = UserSetting::where('user_id', $user->id)->first();
+            if ($userSetting) {
+                if ($userSetting->ship_id == $id) {
+                    $userSetting->ship_id = null;
+                }
+                if ($userSetting->invoice_id == $id) {
+                    $userSetting->invoice_id = null;
+                }
+                $userSetting->save();
+            }
+
+            $address->delete();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Address deleted successfully'
+            ], Response::HTTP_OK);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error deleting address',
+                'error' => $e->getMessage()
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
-        $default_setting = \App\Models\UserSetting::where('user_id', $user->id)->first();
-        if (! $default_setting)
-        {
-            $default_setting          = new \App\Models\UserSetting();
-            $default_setting->user_id = $user->id;
-            $default_setting->save();
-        }
-        if (isset($data['default']) && $data['default'] == 1)
-        {
-            $default_setting->ship_id = $address->id;
-            $default_setting->save();
-        }
-        return back()
-            ->withSuccess('Bạn đã thêm thành công');
     }
 
-    public function updateName(Request $request)
+    public function getOrders(Request $request)
     {
-        $this->validate($request, [
-            'full_name' => 'string|required',
-            'address'   => 'string|required',
-        ]);
-        $data   = $request->all();
-        $user   = auth()->user();
-        $status = $user->fill($data)->save();
+        try {
+            $user = $request->user();
+            
+            $orders = Order::where('customer_id', $user->id)
+                ->with(['orderDetails.product'])
+                ->orderBy('created_at', 'desc')
+                ->paginate(10);
 
-        if ($status)
-        {
-            return back()
-                ->withSuccess('Bạn đã cập nhật thành công');
-        } else
-        {
-            return back()
-                ->withError('Lỗi xãy ra');
+            return response()->json([
+                'success' => true,
+                'data' => $orders
+            ], Response::HTTP_OK);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error fetching orders',
+                'error' => $e->getMessage()
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
-    public function updateDescription(Request $request)
+
+    public function getWishlist(Request $request)
     {
-        $this->validate($request, [
-            'description' => 'string|required',
-        ]);
-        $data   = $request->all();
-        $user   = auth()->user();
-        $status = $user->fill($data)->save();
+        try {
+            $user = $request->user();
+            
+            $wishlist = Wishlist::where('user_id', $user->id)
+                ->whereHas('product', function ($query) {
+                    $query->where('status', 'active');
+                })
+                ->with('product')
+                ->get();
 
-        if ($status)
-        {
-            return back()
-                ->withSuccess('Bạn đã thêm thành công');
-        } else
-        {
-            return back()
-                ->withError('Lỗi xãy ra');
+            return response()->json([
+                'success' => true,
+                'data' => $wishlist
+            ], Response::HTTP_OK);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error fetching wishlist',
+                'error' => $e->getMessage()
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
-    public function updateTax(Request $request)
-    {
-        $this->validate($request, [
-            'taxname'    => 'string|required',
-            'taxcode'    => 'string|required',
-            'taxaddress' => 'string|required',
-
-        ]);
-        $data   = $request->all();
-        $user   = auth()->user();
-        $status = $user->fill($data)->save();
-        if ($status)
-        {
-            return back()
-                ->withSuccess('Bạn đã thêm thành công');
-        } else
-        {
-            return back()
-                ->withError('Lỗi xãy ra');
-        }
-    }
-
-    public function viewOrder()
-    {
-        $data['detail']     = \App\Models\SettingDetail::find(1);
-        $data['categories'] = \App\Models\Category::where('status', 'active')->where('parent_id', null)->get();
-        ////
-        $data['pagetitle'] = "Đơn hàng";
-        $data['links']     = array();
-        $link              = new \App\Models\Links();
-        $link->title       = 'Đặt hàng';
-        $link->url         = '#';
-        array_push($data['links'], $link);
-
-        $user = auth()->user();
-        if (! $user)
-        {
-            return redirect()->route('front.login');
-        }
-        $sql            = "SELECT * from orders where customer_id = " . $user->id . "  ";
-        $data['orders'] = DB::select($sql);
-        foreach ($data['orders'] as $order)
-        {
-            $details        = \DB::select('select a.*, b.title, b.photo from (select * from order_details where wo_id =' . $order->id . ' ) as a left join products b on a.product_id = b.id');
-            $order->details = $details;
-        }
-
-        $sql_new_blog = "SELECT * from products where status = 'active' and stock >= 0  order by id desc LIMIT 6";
-        // return view($this->front_view.'.product.category',$data);
-        return view($this->front_view . '.profile.order', $data);
-    }
-
 }

@@ -143,7 +143,7 @@ class _DetailPageState extends State<DetailPage> {
       return;
     }
 
-    final name = 'Anonymous'; // Có thể thay bằng tên người dùng thực tế
+    const name = 'Anonymous'; // Có thể thay bằng tên người dùng thực tế
     final data = {
       'name': name,
       'content': content,

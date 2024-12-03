@@ -1,26 +1,25 @@
 plugins {
     id "com.android.application"
     id "kotlin-android"
-    // Flutter Gradle Plugin phải được áp dụng sau các plugin Android và Kotlin.
     id "dev.flutter.flutter-gradle-plugin"
 }
 
 android {
-    namespace = "com.example.frontend"  // Đảm bảo chỉ có một namespace duy nhất cho ứng dụng chính.
+    namespace = "com.example.frontend"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_1_8
-        targetCompatibility = JavaVersion.VERSION_1_8
+        sourceCompatibility = JavaVersion.VERSION_11    // Thay đổi từ 1_8 thành 11
+        targetCompatibility = JavaVersion.VERSION_11    // Thay đổi từ 1_8 thành 11
     }
 
     kotlinOptions {
-        jvmTarget = JavaVersion.VERSION_1_8
+        jvmTarget = '11'    // Thay đổi từ VERSION_1_8 thành '11'
     }
 
     defaultConfig {
-        applicationId = "com.example.frontend"  // Đảm bảo applicationId đúng với tên gói của ứng dụng
+        applicationId = "com.example.frontend"
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
@@ -29,17 +28,15 @@ android {
 
     buildTypes {
         release {
-            signingConfig = signingConfigs.debug  // Cấu hình ký cho bản phát hành (có thể thay thế bằng các ký tự khác khi phát hành chính thức)
+            signingConfig = signingConfigs.debug
         }
     }
 }
 
 flutter {
-    source = "../.."  // Đảm bảo đường dẫn đến thư mục gốc của Flutter đúng
+    source = "../.."
 }
 
 dependencies {
-    // Các phụ thuộc Flutter và Android khác nếu có
-    implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version" 
-    // Bạn có thể thêm các thư viện cần thiết khác ở đây
+    implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
 }

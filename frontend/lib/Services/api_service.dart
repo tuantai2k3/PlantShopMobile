@@ -676,52 +676,60 @@ class ApiService {
     }
   }
 
-  Future<Map<String, dynamic>> updateUserProfile({
-    String? username,
-    String? phone,
-    String? address,
-    String? description,
-  }) async {
-    try {
-      if (_token == null) {
-        return {'success': false, 'message': 'Token is not set'};
-      }
+ static Future<Map<String, dynamic>> updateUserProfile({
+  String? token,
+  String? username,
+  String? phone,
+  String? address,
+  String? description,
+  String? taxname,
+  String? taxcode,
+  String? taxaddress,
+}) async {
+  try {
+    if (token == null || token.isEmpty) {
+      return {'success': false, 'message': 'Token is not set or is invalid'};
+    }
 
-      final Map<String, dynamic> updateData = {
-        if (username != null) 'username': username,
-        if (phone != null) 'phone': phone,
-        if (address != null) 'address': address,
-        if (description != null) 'description': description,
+    final Map<String, dynamic> updateData = {
+      if (username != null) 'username': username,
+      if (phone != null) 'phone': phone,
+      if (address != null) 'address': address,
+      if (description != null) 'description': description,
+      if (taxname != null) 'taxname': taxname,
+      if (taxcode != null) 'taxcode': taxcode,
+      if (taxaddress != null) 'taxaddress': taxaddress,
+    };
+
+    final response = await http.put(
+      Uri.parse('$baseUrl/profile/update'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token', // Sử dụng token trong header
+      },
+      body: jsonEncode(updateData),
+    );
+
+    final Map<String, dynamic> responseData = jsonDecode(response.body);
+
+    if (response.statusCode == 200) {
+      return {
+        'success': true,
+        'message': responseData['message'] ?? 'Profile updated successfully',
+        'user': responseData['user'] ?? {},
       };
-
-      final response = await http.put(
-        Uri.parse('$baseUrl/profile/update'),
-        headers: _headers,
-        body: jsonEncode(updateData),
-      );
-
-      print('Update Profile Response Status: ${response.statusCode}');
-      print('Update Profile Response Body: ${response.body}');
-
-      final Map<String, dynamic> responseData = jsonDecode(response.body);
-
-      if (response.statusCode == 200) {
-        return {
-          'success': true,
-          'message': responseData['message'] ?? 'Profile updated successfully',
-          'user': responseData['user']
-        };
-      }
-
+    } else {
       return {
         'success': false,
         'message': responseData['message'] ?? 'Failed to update profile'
       };
-    } catch (e) {
-      print('Error updating profile: $e');
-      return {'success': false, 'message': 'Error: $e'};
     }
+  } catch (e) {
+    print('Error updating profile: $e');
+    return {'success': false, 'message': 'Error: $e'};
   }
+}
+
 
   // Utility Methods
   static Future<bool> checkEmailExists(String email) async {

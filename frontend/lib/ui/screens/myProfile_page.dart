@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/loginProvider.dart';
-
+import '../../ui/screens/editprofile.dart';
 class MyProfile extends ConsumerWidget {
   const MyProfile({super.key});
 
@@ -70,18 +70,23 @@ class MyProfile extends ConsumerWidget {
             const SizedBox(height: 20),
 
             // Nút chỉnh sửa (Nếu cần thiết)
-            ElevatedButton(
-              onPressed: () {
-                // Chức năng chỉnh sửa nếu cần
-                // Ví dụ: mở trang chỉnh sửa hồ sơ
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.green, // Màu nút
-                padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 40),
-                textStyle: const TextStyle(fontSize: 16),
-              ),
-              child: const Text("Chỉnh sửa hồ sơ"),
-            ),
+            // Trong MyProfile widget
+ElevatedButton(
+  onPressed: () {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const EditProfileScreen(),
+      ),
+    );
+  },
+  style: ElevatedButton.styleFrom(
+    backgroundColor: Colors.green,
+    padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 40),
+    textStyle: const TextStyle(fontSize: 16),
+  ),
+  child: const Text("Chỉnh sửa hồ sơ"),
+),
           ],
         ),
       ),
