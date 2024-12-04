@@ -23,22 +23,26 @@ use Symfony\Component\Yaml\Tag\TaggedValue;
 class Dumper
 {
     /**
-     * @param int $indentation The amount of spaces to use for indentation of nested nodes
+     * The amount of spaces to use for indentation of nested nodes.
      */
-    public function __construct(private int $indentation = 4)
+    private int $indentation;
+
+    public function __construct(int $indentation = 4)
     {
         if ($indentation < 1) {
             throw new \InvalidArgumentException('The indentation must be greater than zero.');
         }
+
+        $this->indentation = $indentation;
     }
 
     /**
      * Dumps a PHP value to YAML.
      *
-     * @param mixed                     $input  The PHP value
-     * @param int                       $inline The level where you switch to inline YAML
-     * @param int                       $indent The level of indentation (used internally)
-     * @param int-mask-of<Yaml::DUMP_*> $flags  A bit field of Yaml::DUMP_* constants to customize the dumped YAML string
+     * @param mixed $input  The PHP value
+     * @param int   $inline The level where you switch to inline YAML
+     * @param int   $indent The level of indentation (used internally)
+     * @param int   $flags  A bit field of Yaml::DUMP_* constants to customize the dumped YAML string
      */
     public function dump(mixed $input, int $inline = 0, int $indent = 0, int $flags = 0): string
     {
@@ -77,13 +81,13 @@ class Dumper
                         $blockChompingIndicator = '-';
                     }
 
-                    $output .= \sprintf('%s%s%s |%s%s', $prefix, $dumpAsMap ? Inline::dump($key, $flags).':' : '-', '', $blockIndentationIndicator, $blockChompingIndicator);
+                    $output .= sprintf('%s%s%s |%s%s', $prefix, $dumpAsMap ? Inline::dump($key, $flags).':' : '-', '', $blockIndentationIndicator, $blockChompingIndicator);
 
                     foreach (explode("\n", $value) as $row) {
                         if ('' === $row) {
                             $output .= "\n";
                         } else {
-                            $output .= \sprintf("\n%s%s%s", $prefix, str_repeat(' ', $this->indentation), $row);
+                            $output .= sprintf("\n%s%s%s", $prefix, str_repeat(' ', $this->indentation), $row);
                         }
                     }
 
@@ -91,14 +95,14 @@ class Dumper
                 }
 
                 if ($value instanceof TaggedValue) {
-                    $output .= \sprintf('%s%s !%s', $prefix, $dumpAsMap ? Inline::dump($key, $flags).':' : '-', $value->getTag());
+                    $output .= sprintf('%s%s !%s', $prefix, $dumpAsMap ? Inline::dump($key, $flags).':' : '-', $value->getTag());
 
                     if (Yaml::DUMP_MULTI_LINE_LITERAL_BLOCK & $flags && \is_string($value->getValue()) && str_contains($value->getValue(), "\n") && !str_contains($value->getValue(), "\r\n")) {
                         $blockIndentationIndicator = $this->getBlockIndentationIndicator($value->getValue());
-                        $output .= \sprintf(' |%s', $blockIndentationIndicator);
+                        $output .= sprintf(' |%s', $blockIndentationIndicator);
 
                         foreach (explode("\n", $value->getValue()) as $row) {
-                            $output .= \sprintf("\n%s%s%s", $prefix, str_repeat(' ', $this->indentation), $row);
+                            $output .= sprintf("\n%s%s%s", $prefix, str_repeat(' ', $this->indentation), $row);
                         }
 
                         continue;
@@ -122,7 +126,7 @@ class Dumper
 
                 $willBeInlined = $inline - 1 <= 0 || !\is_array($value) && $dumpObjectAsInlineMap || !$value;
 
-                $output .= \sprintf('%s%s%s%s',
+                $output .= sprintf('%s%s%s%s',
                     $prefix,
                     $dumpAsMap ? Inline::dump($key, $flags).':' : '-',
                     $willBeInlined ? ' ' : "\n",
@@ -136,14 +140,14 @@ class Dumper
 
     private function dumpTaggedValue(TaggedValue $value, int $inline, int $indent, int $flags, string $prefix): string
     {
-        $output = \sprintf('%s!%s', $prefix ? $prefix.' ' : '', $value->getTag());
+        $output = sprintf('%s!%s', $prefix ? $prefix.' ' : '', $value->getTag());
 
         if (Yaml::DUMP_MULTI_LINE_LITERAL_BLOCK & $flags && \is_string($value->getValue()) && str_contains($value->getValue(), "\n") && !str_contains($value->getValue(), "\r\n")) {
             $blockIndentationIndicator = $this->getBlockIndentationIndicator($value->getValue());
-            $output .= \sprintf(' |%s', $blockIndentationIndicator);
+            $output .= sprintf(' |%s', $blockIndentationIndicator);
 
             foreach (explode("\n", $value->getValue()) as $row) {
-                $output .= \sprintf("\n%s%s%s", $prefix, str_repeat(' ', $this->indentation), $row);
+                $output .= sprintf("\n%s%s%s", $prefix, str_repeat(' ', $this->indentation), $row);
             }
 
             return $output;

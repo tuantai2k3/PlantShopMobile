@@ -63,8 +63,10 @@ class ConfigPaths
 
     /**
      * Get the current home directory.
+     *
+     * @return string|null
      */
-    public function homeDir(): ?string
+    public function homeDir()
     {
         if ($homeDir = $this->getEnv('HOME') ?: $this->windowsHomeDir()) {
             return \strtr($homeDir, '\\', '/');
@@ -73,7 +75,7 @@ class ConfigPaths
         return null;
     }
 
-    private function windowsHomeDir(): ?string
+    private function windowsHomeDir()
     {
         if (\defined('PHP_WINDOWS_VERSION_MAJOR')) {
             $homeDrive = $this->getEnv('HOMEDRIVE');
@@ -86,16 +88,13 @@ class ConfigPaths
         return null;
     }
 
-    private function homeConfigDir(): ?string
+    private function homeConfigDir()
     {
         if ($homeConfigDir = $this->getEnv('XDG_CONFIG_HOME')) {
             return $homeConfigDir;
         }
 
         $homeDir = $this->homeDir();
-        if ($homeDir === null) {
-            return null;
-        }
 
         return $homeDir === '/' ? $homeDir.'.config' : $homeDir.'/.config';
     }
@@ -131,7 +130,7 @@ class ConfigPaths
      *
      * @see self::homeConfigDir
      */
-    public function currentConfigDir(): ?string
+    public function currentConfigDir(): string
     {
         if ($this->configDir !== null) {
             return $this->configDir;
@@ -145,7 +144,7 @@ class ConfigPaths
             }
         }
 
-        return $configDirs[0] ?? null;
+        return $configDirs[0];
     }
 
     /**
@@ -232,8 +231,10 @@ class ConfigPaths
      * If $PATH is unset/empty it defaults to '/usr/sbin:/usr/bin:/sbin:/bin'.
      *
      * @param string $command the executable to locate
+     *
+     * @return string
      */
-    public function which($command): ?string
+    public function which($command)
     {
         foreach ($this->pathDirs() as $path) {
             $fullpath = $path.\DIRECTORY_SEPARATOR.$command;
@@ -258,7 +259,6 @@ class ConfigPaths
      */
     private function allDirNames(array $baseDirs): array
     {
-        $baseDirs = \array_filter($baseDirs);
         $dirs = \array_map(function ($dir) {
             return \strtr($dir, '\\', '/').'/psysh';
         }, $baseDirs);

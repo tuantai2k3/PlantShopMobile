@@ -1,77 +1,43 @@
 <?php
 
-use App\Http\Controllers\Api\AuthenticationController;
-use App\Http\Controllers\Api\CartController;
-use App\Http\Controllers\Api\CommentController;
-use App\Http\Controllers\Api\OrderController;
-use App\Http\Controllers\Api\ProductController;
-use App\Http\Controllers\Api\ProfileController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Api\CartController;
+use App\Http\Controllers\Api\CommentController;
 
-/*
-|--------------------------------------------------------------------------
-| API Routes
-|--------------------------------------------------------------------------
-*/
+Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
+    return $request->user();
+});
 
-Route::group(['prefix' => 'v1'], function () {
-    // Public routes
-    Route::controller(AuthenticationController::class)->group(function () {
-        Route::post('login', 'store');
-        Route::post('register', 'register');
-        Route::post('forgot-password', 'forgotPassword');
-        Route::post('reset-password', 'resetPassword');
-    });
+Route::group(['namespace' => 'Api', 'prefix' => 'v1'], function () {
+    // Authentication routes
+    Route::post('login', [\App\Http\Controllers\Api\AuthenticationController::class, 'store']);
+    Route::post('logout', [\App\Http\Controllers\Api\AuthenticationController::class, 'destroy'])->middleware('auth:api');
+    Route::post('register', [\App\Http\Controllers\Api\AuthenticationController::class, 'register']);
+    Route::post('updateprofile', [\App\Http\Controllers\Api\ProfileController::class, 'updateProfile'])->middleware('auth:api');
+    Route::post('forgot-password', [\App\Http\Controllers\Api\AuthenticationController::class, 'forgotPassword']);
+    Route::post('reset-password', [\App\Http\Controllers\Api\AuthenticationController::class, 'resetPassword']);
 
-    // Product routes (public)
-    Route::controller(ProductController::class)->group(function () {
-        Route::get('products', 'getAllProduct');
-        Route::get('products/{id}', 'show');
-    });
+    // Product routes
+    Route::get('products', [\App\Http\Controllers\Api\ProductController::class, 'getAllProduct']);
+    Route::get('products/{id}', [\App\Http\Controllers\Api\ProductController::class, 'show']);
 
-    // Public comment routes
-    Route::controller(CommentController::class)->prefix('comments')->group(function () {
-        Route::get('/', 'index');
-        Route::get('product/{productId}', 'getByProduct');
-    });
+    // Cart routes
+    Route::get('cart', [\App\Http\Controllers\Api\CartController::class, 'index']);
+    Route::post('cart/add', [\App\Http\Controllers\Api\CartController::class, 'add']);
+    Route::put('cart/update/{id}', [\App\Http\Controllers\Api\CartController::class, 'update']);
+    Route::delete('cart/{id}', [\App\Http\Controllers\Api\CartController::class, 'remove']);
+    Route::delete('cart/clear', [\App\Http\Controllers\Api\CartController::class, 'clear']);
+    Route::post('cart/checkout', [\App\Http\Controllers\Api\CartController::class, 'checkout']);
 
-    // Protected routes
-    Route::middleware('auth:sanctum')->group(function () {
-        // User/Profile routes
-        Route::controller(ProfileController::class)->group(function () {
-            Route::get('profile', 'getProfile');
-            Route::post('profile/update', 'updateProfile');
-        });
+    // Comment routes
+    Route::get('comments', [\App\Http\Controllers\Api\CommentController::class, 'index']);
+    Route::post('comments', [\App\Http\Controllers\Api\CommentController::class, 'store']);
+    Route::put('comments/{id}', [\App\Http\Controllers\Api\CommentController::class, 'update']);
+    Route::delete('comments/{id}', [\App\Http\Controllers\Api\CommentController::class, 'destroy']);
+    Route::get('comments/product/{productId}', [\App\Http\Controllers\Api\CommentController::class, 'getByProduct']);
 
-        // Cart routes
-        Route::controller(CartController::class)->prefix('cart')->group(function () {
-            Route::get('/', 'index');
-            Route::post('add', 'add');
-            Route::put('update/{id}', 'update');
-            Route::delete('{id}', 'remove');
-            Route::delete('clear', 'clear');
-            Route::post('checkout', 'checkout');
-        });
-
-        // Protected comment routes
-        Route::controller(CommentController::class)->prefix('comments')->group(function () {
-            Route::post('/', 'store');
-            Route::put('{id}', 'update');
-            Route::delete('{id}', 'destroy');
-        });
-
-        // Order routes
-        Route::controller(OrderController::class)->prefix('orders')->group(function () {
-            Route::get('/', 'index');
-            Route::post('/', 'store');
-            Route::get('{id}', 'show');
-            Route::put('{id}/status', 'updateStatus');
-            Route::delete('{id}', 'destroy');
-            Route::get('user/orders', 'getUserOrders');
-        });
-
-        // Auth logout route
-        Route::post('logout', [AuthenticationController::class, 'destroy']);
-    });
+    // Hoặc sử dụng Resource Route (ngắn gọn hơn)
+    // Route::apiResource('comments', \App\Http\Controllers\Api\CommentController::class);
+    // Route::get('comments/product/{productId}', [\App\Http\Controllers\Api\CommentController::class, 'getByProduct']);
 });
