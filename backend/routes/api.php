@@ -37,6 +37,11 @@ Route::group(['namespace' => 'Api', 'prefix' => 'v1'], function () {
     Route::delete('comments/{id}', [\App\Http\Controllers\Api\CommentController::class, 'destroy']);
     Route::get('comments/product/{productId}', [\App\Http\Controllers\Api\CommentController::class, 'getByProduct']);
 
+
+    //Orders routes
+    Route::post('/order', [\App\Http\Controllers\Api\OrderController::class, 'store']);
+    // Route::get('/orders', [\App\Http\Controllers\Api\OrderController::class, 'getOrders']);
+
     // Hoặc sử dụng Resource Route (ngắn gọn hơn)
     // Route::apiResource('comments', \App\Http\Controllers\Api\CommentController::class);
     // Route::get('comments/product/{productId}', [\App\Http\Controllers\Api\CommentController::class, 'getByProduct']);

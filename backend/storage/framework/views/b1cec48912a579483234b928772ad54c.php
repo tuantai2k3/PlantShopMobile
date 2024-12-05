@@ -1,19 +1,19 @@
-@extends('backend.layouts.master')
-@section('content')
+
+<?php $__env->startSection('content'); ?>
 
 <div class="content">
-@include('backend.layouts.notification')
+<?php echo $__env->make('backend.layouts.notification', \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?>
     <h2 class="intro-y text-lg font-medium mt-10">
         Danh sách đặt hàng
     </h2>
     <div class="grid grid-cols-12 gap-6 mt-5">
         <div class="intro-y col-span-12 flex flex-wrap sm:flex-nowrap items-center mt-2">
            
-            <div class="hidden md:block mx-auto text-slate-500">Hiển thị trang {{$orders->currentPage()}} trong {{$orders->lastPage()}} trang</div>
+            <div class="hidden md:block mx-auto text-slate-500">Hiển thị trang <?php echo e($orders->currentPage()); ?> trong <?php echo e($orders->lastPage()); ?> trang</div>
             <div class="w-full sm:w-auto mt-3 sm:mt-0 sm:ml-auto md:ml-0">
                 <div class="w-56 relative text-slate-500">
-                    <form action="{{route('order.search')}}" method = "get">
-                        @csrf
+                    <form action="<?php echo e(route('order.search')); ?>" method = "get">
+                        <?php echo csrf_field(); ?>
                         <input type="text" name="datasearch" class="ipsearch form-control w-56 box pr-10" placeholder="Search...">
                         <i class="w-4 h-4 absolute my-auto inset-y-0 mr-3 right-0" data-lucide="search"></i> 
                     </form>
@@ -36,36 +36,43 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @foreach($orders as $item)
+                    <?php $__currentLoopData = $orders; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $item): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                     
                     <tr class="intro-x ">
                         <td>
                             
-                           <a  href="{{route('order.show',$item->id)}}"> 
-                            {{$item->name}}
+                           <a  href="<?php echo e(route('order.show',$item->id)); ?>"> 
+                            <?php echo e($item->name); ?>
+
                             </a>
                             
                         </td>
                         
                         <td class="text-right">
                             
-                            {{ number_format($item->total_amount, 0, '.', ',');}}
+                            <?php echo e(number_format($item->total_amount, 0, '.', ',')); ?>
+
                             
                         </td>
                         <td class="text-right" >
-                            {{$item->phone}}
+                            <?php echo e($item->phone); ?>
+
                         </td>
                         <td class="text-right" >
-                            {{$item->shipping_address}}
+                            <?php echo e($item->shipping_address); ?>
+
                         </td>
                         <td class="text-right" >
-                            {{$item->payment_method}}
+                            <?php echo e($item->payment_method); ?>
+
                         </td>
                         <td>
-                            {{$item->created_at}}
+                            <?php echo e($item->created_at); ?>
+
                         </td>
                         <td>
-                            {{$item->status}}
+                            <?php echo e($item->status); ?>
+
                         </td>
                         <td class="table-report__action w-56">
                             <div class="flex justify-center items-center">
@@ -77,14 +84,14 @@
                                     <ul class="dropdown-content">
                                         
                                          
-                                        <li><a href="{{route('order.show',$item->id)}}" class="dropdown-item flex items-center mr-3" href="javascript:;"> <i data-lucide="eye" class="w-4 h-4 mr-1"></i> Xem </a></li>
-                                        <li><a href="{{route('order.edit',$item->id)}}" class="dropdown-item flex items-center mr-3" href="javascript:;"> <i data-lucide="check-square" class="w-4 h-4 mr-1"></i> Hoàn thành </a></li>
+                                        <li><a href="<?php echo e(route('order.show',$item->id)); ?>" class="dropdown-item flex items-center mr-3" href="javascript:;"> <i data-lucide="eye" class="w-4 h-4 mr-1"></i> Xem </a></li>
+                                        <li><a href="<?php echo e(route('order.edit',$item->id)); ?>" class="dropdown-item flex items-center mr-3" href="javascript:;"> <i data-lucide="check-square" class="w-4 h-4 mr-1"></i> Hoàn thành </a></li>
                                         
                                         <li> 
-                                            <form action="{{route('order.destroy',$item->id)}}" method = "post">
-                                            @csrf
-                                            @method('delete')
-                                            <a class="dropdown-item flex items-center text-danger dltBtn" data-id="{{$item->id}}" href="javascript:;" data-tw-toggle="modal" data-tw-target="#delete-confirmation-modal"> <i data-lucide="trash-2" class="w-4 h-4 mr-1"></i> Delete </a>
+                                            <form action="<?php echo e(route('order.destroy',$item->id)); ?>" method = "post">
+                                            <?php echo csrf_field(); ?>
+                                            <?php echo method_field('delete'); ?>
+                                            <a class="dropdown-item flex items-center text-danger dltBtn" data-id="<?php echo e($item->id); ?>" href="javascript:;" data-tw-toggle="modal" data-tw-target="#delete-confirmation-modal"> <i data-lucide="trash-2" class="w-4 h-4 mr-1"></i> Delete </a>
                                             </form>
                                         </li>
                                          
@@ -95,7 +102,7 @@
                        
                     </tr>
 
-                    @endforeach
+                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                     
                 </tbody>
             </table>
@@ -106,17 +113,18 @@
         <!-- BEGIN: Pagination -->
         <div class="intro-y col-span-12 flex flex-wrap sm:flex-row sm:flex-nowrap items-center">
             <nav class="w-full sm:w-auto sm:mr-auto">
-                {{$orders->links('vendor.pagination.tailwind')}}
+                <?php echo e($orders->links('vendor.pagination.tailwind')); ?>
+
             </nav>
            
         </div>
         <!-- END: Pagination -->
 </div>
   
-@endsection
-@section('scripts')
+<?php $__env->stopSection(); ?>
+<?php $__env->startSection('scripts'); ?>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-<script src="{{asset('backend/assets/vendor/js/bootstrap-switch-button.min.js')}}"></script>
+<script src="<?php echo e(asset('backend/assets/vendor/js/bootstrap-switch-button.min.js')); ?>"></script>
 <script>
     $.ajaxSetup({
         headers: {'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')}
@@ -174,4 +182,5 @@
 
   
 </script>
-@endsection
+<?php $__env->stopSection(); ?>
+<?php echo $__env->make('backend.layouts.master', \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?><?php /**PATH D:\CODE_VS\Plant-shop\backend\resources\views/backend/orders/index.blade.php ENDPATH**/ ?>

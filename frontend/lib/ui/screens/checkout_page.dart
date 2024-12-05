@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:frontend/models/order.dart'; // Import mô hình Order
 import 'package:frontend/models/product.dart';
-import 'package:provider/provider.dart';
 import 'package:frontend/providers/cart_provider.dart';
+import 'package:frontend/Services/order_service.dart'; // Import dịch vụ gửi đơn hàng
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 import 'bank_payment_page.dart';
 
 class CheckoutPage extends StatelessWidget {
@@ -19,11 +21,10 @@ class CheckoutPage extends StatelessWidget {
   final List<String> _paymentMethods = [
     'Thanh toán khi nhận hàng',
     'Ngân hàng',
-    // 'VISA/MasterCard',
     'Momo'
   ];
 
-  final bool _isBuyNow = true; // Giả sử bạn có biến này để xác định có "Mua ngay" hay không.
+  final bool _isBuyNow = true;
 
   @override
   Widget build(BuildContext context) {
@@ -32,13 +33,11 @@ class CheckoutPage extends StatelessWidget {
 
     return WillPopScope(
       onWillPop: () async {
-        // Kiểm tra nếu là hành động "Mua ngay", xóa sản phẩm khỏi giỏ hàng
         if (_isBuyNow) {
-          // Giả sử bạn có hàm `removeFromCart()` để xóa sản phẩm khỏi giỏ hàng
-          final product = cart.items.first; // Bạn có thể lấy sản phẩm mà người dùng chọn
+          final product = cart.items.first;
           handleBackAction(product, cart);
         }
-        return true; // Quay lại trang trước
+        return true;
       },
       child: Scaffold(
         appBar: AppBar(
@@ -151,7 +150,8 @@ class CheckoutPage extends StatelessWidget {
                         subtitle: Text(
                             '${product.quantity} x ${formatCurrency.format(product.price)}'),
                         trailing: Text(
-                          formatCurrency.format(product.quantity * product.price),
+                          formatCurrency
+                              .format(product.quantity * product.price),
                         ),
                       );
                     },
@@ -162,7 +162,8 @@ class CheckoutPage extends StatelessWidget {
                     children: [
                       const Text(
                         'Tổng cộng:',
-                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                        style: TextStyle(
+                            fontSize: 16, fontWeight: FontWeight.bold),
                       ),
                       Text(
                         formatCurrency.format(cart.totalAmount),
@@ -176,21 +177,46 @@ class CheckoutPage extends StatelessWidget {
                   ),
                   const SizedBox(height: 32),
                   ElevatedButton(
-                    onPressed: () {
+                    onPressed: () async {
                       if (_formKey.currentState!.validate()) {
-                        if (_selectedPaymentMethod == 'Ngân hàng') {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (context) => const BankPaymentPage()),
-                          );
-                        } else {
-                        cart.checkout(context, _selectedPaymentMethod).then((success) {
-  if (success) {
-    Navigator.pushNamed(context, '/checkout-success');
-  }
-});
+                        // Tạo danh sách sản phẩm từ giỏ hàng
+                        final cartItems = cart.items.map((item) {
+                          return {
+                            'id': item.id,
+                            'quantity': item.quantity,
+                          };
+                        }).toList();
 
+                        // Tạo JSON gửi tới API
+                        final orderData = {
+                          "name": _nameController.text,
+                          "phone": _phoneController.text,
+                          "shipping_address": _addressController.text,
+                          "payment_method": _selectedPaymentMethod,
+                          "total_amount": cart.totalAmount,
+                          "cart": cartItems,
+                        };
+
+                        try {
+                          final success =
+                              await OrderService.createOrder(orderData);
+                          if (success) {
+                            Navigator.pushNamed(context, '/checkout-success');
+                          } else {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Lỗi khi tạo đơn hàng'),
+                                backgroundColor: Colors.red,
+                              ),
+                            );
+                          }
+                        } catch (e) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('Lỗi: ${e.toString()}'),
+                              backgroundColor: Colors.red,
+                            ),
+                          );
                         }
                       }
                     },

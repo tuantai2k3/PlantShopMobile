@@ -248,6 +248,95 @@ class CartProvider extends ChangeNotifier {
       notifyListeners();
     }
   }
+  
+//Order
+  Future<bool> placeOrder(
+    BuildContext context, {
+    required String phone,
+    required String shippingAddress,
+    required String paymentMethod,
+  }) async {
+    if (_items.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Giỏ hàng của bạn trống.'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return false;
+    }
+
+    try {
+      isLoading = true;
+      notifyListeners();
+
+      final headers = await _getHeaders();
+      final response = await http.post(
+        Uri.parse('$_baseUrl/orders'),
+        headers: headers,
+        body: json.encode({
+          'phone': phone,
+          'shipping_address': shippingAddress,
+          'payment_method': paymentMethod,
+          'total_amount': totalAmount, // Tổng giá trị từ giỏ hàng
+          'cart': _items.map((item) {
+            return {
+              'product_id': item.id,
+              'quantity': item.quantity,
+              'price': item.price,
+            };
+          }).toList(),
+        }),
+      );
+
+      print('Place order response: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        if (data['success'] == true) {
+          // Xóa giỏ hàng sau khi đặt hàng thành công
+          clearCart();
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Đặt hàng thành công!'),
+              backgroundColor: Colors.green,
+            ),
+          );
+
+          return true;
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(data['message'] ?? 'Đặt hàng thất bại.'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Đặt hàng thất bại. Vui lòng thử lại.'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+      return false;
+    } catch (e) {
+      print('Error placing order: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Không thể kết nối tới server: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return false;
+    } finally {
+      isLoading = false;
+      notifyListeners();
+    }
+  }
+
+
 
   // Hàm để xử lý khi bấm nút back
   void handleBackAction(Product product) {
