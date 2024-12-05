@@ -66,7 +66,7 @@ class AdminController extends Controller
           $data['sobai'] = \DB::select($sql1)[0]->tong;
           $sql2 = "select count(id) as tong from orders where status = 'active'  ";
           $data['sodon'] = \DB::select($sql2)[0]->tong;
-          $sql3 = "select sum(final_amount) as tong from orders where status = 'active'  ";
+            $sql3 = "select sum(total_amount) as tong from orders where status = 'active'";
           $data['tongdon'] = \DB::select($sql3)[0]->tong;
 
           $data['hotproducts']=\DB::select('select * from products order by hit desc limit 10');
